@@ -1,0 +1,29 @@
+{
+	"name": "@mcesystems/reflow-react-display-layer",
+	"version": "3.9.0",
+	"description": "React display layer for @mcesystems/reflow",
+	"main": "dist/index",
+	"typings": "dist/index",
+	"scripts": {
+		"build": "tsc",
+		"prepublishOnly": "npm run build"
+	},
+	"repository": {
+		"url": "https://github.com/mceSystems/reflow"
+	},
+	"author": "mceSystems",
+	"license": "MIT",
+	"dependencies": {
+		"@mcesystems/reflow": "3.9.0",
+		"react": "^16.4.0",
+		"react-dom": "^16.8.6"
+	},
+	"devDependencies": {
+		"@types/react": "^16.3.14",
+		"@types/react-dom": "^16.8.4",
+		"typescript": "^3.2.4"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
