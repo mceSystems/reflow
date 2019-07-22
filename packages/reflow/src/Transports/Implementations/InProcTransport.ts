@@ -1,10 +1,10 @@
 import { ReflowTransport } from "../ReflowTransport";
-import { ReducedViewTree, ViewerParameters } from "../../Reflow";
+import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
 
-let globalInWindowTransport: InProcTransport;
+let globalInWindowTransport: InProcTransport<any>;
 
-export default class InProcTransport extends ReflowTransport {
+export default class InProcTransport<ViewerParameters = {}> extends ReflowTransport<ViewerParameters> {
 	constructor(connectionOptions: object) {
 		super(connectionOptions);
 		// single-toning this instance,
@@ -19,7 +19,7 @@ export default class InProcTransport extends ReflowTransport {
 		return Promise.resolve();
 	}
 	initializeAsDisplay() {
-		return new Promise<InProcTransport>((resolve) => {
+		return new Promise<InProcTransport<ViewerParameters>>((resolve) => {
 			this.sendViewSync();
 			resolve(this);
 		});

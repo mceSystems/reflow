@@ -6,7 +6,7 @@ export type ViewsComponents<ViewMap extends ViewsMapInterface> = {
 	[T in keyof ViewMap]?: ReflowReactComponentClass<ViewMap[T], any, any>;
 };
 
-export default class ReflowDisplayLayer<ViewMap extends ViewsMapInterface> extends React.Component<{ transport: ReflowTransport, views: ViewsComponents<ViewMap> }, { viewTree: ReducedViewTreeItem<ViewsMapInterface, ViewInterface<any, any, any>>[] }> {
+export default class ReflowDisplayLayer<ViewMap extends ViewsMapInterface> extends React.Component<{ transport: ReflowTransport<any>, views: ViewsComponents<ViewMap> }, { viewTree: ReducedViewTreeItem<ViewsMapInterface, ViewInterface<any, any, any>>[] }> {
 	constructor(props) {
 		super(props);
 		this.props.transport.onViewTree((tree) => {

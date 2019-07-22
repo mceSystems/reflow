@@ -10,11 +10,6 @@ const transport = new Transports.InProcTransport({});
 const reflow = new Reflow<ViewInterfacesType>({
 	transport,
 	views: viewInterfaces,
-	viewerParameters: {
-		theme: {
-			palette: {}
-		}
-	}
 });
 
 renderDisplayLayer({

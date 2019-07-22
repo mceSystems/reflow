@@ -23,7 +23,7 @@ export class TranslateableString extends String {
 	}
 }
 
-export interface FlowToolkit<ViewsMap extends ViewsMapInterface> {
+export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	/**
 	 * Start new flow
 	 */
@@ -62,16 +62,10 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface> {
 
 }
 
-export interface ReflowOptions<ViewsMap extends ViewsMapInterface> {
-	transport: ReflowTransport;
+export interface ReflowOptions<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
+	transport: ReflowTransport<ViewerParameters>;
 	views: ViewsMap;
-	viewerParameters: ViewerParameters;
-}
-
-export interface ViewerParameters {
-	theme: {
-		palette: object,
-	};
+	viewerParameters?: ViewerParameters;
 }
 
 export interface ViewTreeItemBase<ViewsMap extends ViewsMapInterface, T extends ViewsMap[keyof ViewsMap]> {
@@ -106,10 +100,10 @@ const createTranslateableString = (original: string, value: string): string => {
 	return translateable;
 };
 
-export class Reflow<ViewsMap extends ViewsMapInterface> {
+export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	private mainFlowProxy: FlowProxy<ViewsMap, any, any, any, any, any>;
 	private started: boolean = false;
-	private transport: ReflowTransport;
+	private transport: ReflowTransport<ViewerParameters>;
 	private views: ViewsMap;
 	private viewStack: Array<ViewTree<ViewsMap>> = [];
 	// used for quick uid-to-viewProxy access
@@ -119,7 +113,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface> {
 	private viewerParameters: ViewerParameters;
 	private currentLanguage: string;
 
-	constructor({ transport, views, viewerParameters }: ReflowOptions<ViewsMap>) {
+	constructor({ transport, views, viewerParameters }: ReflowOptions<ViewsMap, ViewerParameters>) {
 		this.transport = transport;
 		this.views = views;
 		this.viewMap = {};

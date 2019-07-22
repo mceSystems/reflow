@@ -1,17 +1,17 @@
-import { ReducedViewTree, ViewerParameters } from "../Reflow";
+import { ReducedViewTree } from "../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../View";
 
 export type TransportViewEventListener = <T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: T["events"][U]) => void;
 export type TransportViewDoneListener = <T extends ViewInterface>(uid: string, output: T["output"]) => void;
 export type TransportViewStackUpdateListener = (tree: ReducedViewTree<ViewsMapInterface>) => void;
-export type TransportViewerParametersListener = (params: ViewerParameters) => void;
+export type TransportViewerParametersListener<ViewerParameters = {}> = (params: ViewerParameters) => void;
 export type TransportSyncViewListener = () => void;
 
-export abstract class ReflowTransport {
+export abstract class ReflowTransport<ViewerParameters = {}> {
 	protected viewEventListeners: Array<TransportViewEventListener> = [];
 	protected viewDoneListeners: Array<TransportViewDoneListener> = [];
 	protected viewStackUpdateListeners: Array<TransportViewStackUpdateListener> = [];
-	protected viewerParametersListeners: Array<TransportViewerParametersListener> = [];
+	protected viewerParametersListeners: Array<TransportViewerParametersListener<ViewerParameters>> = [];
 	protected viewSyncListeners: Array<TransportSyncViewListener> = [];
 
 	constructor(connectionParams: object) { }
@@ -56,7 +56,7 @@ export abstract class ReflowTransport {
 	onViewDone(listener: TransportViewDoneListener): void {
 		this.viewDoneListeners.push(listener);
 	}
-	onViewerParameters(listener: TransportViewerParametersListener): void {
+	onViewerParameters(listener: TransportViewerParametersListener<ViewerParameters>): void {
 		this.viewerParametersListeners.push(listener);
 	}
 	onSyncView(listener: TransportSyncViewListener): void {
@@ -71,7 +71,7 @@ export abstract class ReflowTransport {
 	 * @returns {Promise<void>}
 	 * @memberof ReflowTransport
 	 */
-	abstract initializeAsDisplay(): Promise<ReflowTransport>;
+	abstract initializeAsDisplay(): Promise<ReflowTransport<ViewerParameters>>;
 	/**
 	 * Registers a listener for view-tree updates coming from the engine
 	 *

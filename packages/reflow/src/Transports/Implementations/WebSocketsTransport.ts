@@ -1,5 +1,5 @@
 import { ReflowTransport } from "../ReflowTransport";
-import { ReducedViewTree, ViewerParameters } from "../../Reflow";
+import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
 
 import ServerSocket from "socket.io";
@@ -10,7 +10,7 @@ interface WebSocketConnectionOptions {
 	port?: number;
 }
 
-export default class WebSocketsTransport extends ReflowTransport {
+export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTransport<ViewerParameters> {
 	private __connectionOptions: WebSocketConnectionOptions;
 	private __socket: ServerSocket | ClientSocket;
 
