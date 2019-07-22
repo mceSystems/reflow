@@ -9,6 +9,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;[Transports](#Transports)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Display Layer](#Display-Layer)\
 [The power of Reflow](#The-power-of-Reflow)\
+[Use case 1 - node application flows with browser display layer](#Use-case-1-node-application-flows-with-browser-display-layer)
+[Use case 2 - application flows and display layer in browser](#Use-case-2-application-flows-and-display-layer-in-browser)
 [Further Reading](#Further-Reading)
 
 # Reflow
@@ -24,7 +26,7 @@ so an application can run on one machine, and be viewed from another (and even m
 Reflow is not suitable to serve as the engine for any application. In most of the cases, libraries like Redux or MobX would be a much wiser choice to run your application. Reflow will benefit you in cases where:
 * You have multiple applications with different flows, but you want to use the same UI components
 * Your business logic is "heavy" but UI should be kept "lite" or "dumb"
-* You want you application flow to run on a different machine or in a different process than the UI (i.e. flow on node process, UI in a browser)
+* You want you application flow to run on a different machine or in a different process than the UI (i.e. flow on node process, UI in a browser or flow and UI both in a browser)
 * You want to separate flow development from UI development (i.e. two teams working in parallel)
 
 ### Before we begin - Typescript!
@@ -218,6 +220,8 @@ It can be implemented using any method, as long as it can render the views.\
 You can use the already implemented React display layer using `@mcesystems/reflow-react-display-layer`
 
 ## The power of Reflow
+### Use case 1 - node application flows with browser display layer
+This case is useful for either server-client application relationship between business logic flows and UI, or even for stateless UI application - you can close the browser, open it again and will still see the same application UI state (as the view tree is kept in the node process)\
 Lets tie it all up - we'll build 3 pieces:
 * Display layer container - a browser that will contain the display layer and use the `my-views-package` views (we'll use the `@mcesystems/reflow-react-display-layer` here), we'll also use WebSocket for the engine-to-display-layer communication 
 * Flow1 - a node application that will use the views in some way
@@ -225,7 +229,7 @@ Lets tie it all up - we'll build 3 pieces:
 
 Of course this is just an example of using Reflow - not necessarily a best practice
 
-### Display layer container
+#### Display layer container
 Due to the fact that the display layer "knows" all the views in `my-views-package`, we can build a browser application that will serve any flow that uses the interfaces from `my-view-interfaces-package`:
 ```typescript
 // index.ts
@@ -251,7 +255,7 @@ renderDisplayLayer({
 ```
 Then we'll webpack - and that's it! we have a single browser app that can display any flow we want
 
-### Flow1 & Flow1
+#### Flow1 & Flow1
 Let's take the flow from the example above and create a Reflow engine instance that will run it
 ```typescript
 // index.ts
@@ -301,6 +305,9 @@ reflow.start(flow2).then(() => {
 Now running the index in both cases creates a websocket server, and you can run the display layer container in your browser (from any machine visible to the server, just change the host) to view the application
 
 Of course the part of initiating the Reflow engine can also be separated to a shared module, or a separate application that gets the main flow as an argument, so the only changed part of your applications library is the flows themselves.
+
+### Use case 2 - application flows and display layer in browser
+TODO
 
 ### Further reading
 [Reflow engine documentation](./packages/reflow/README.md)\
