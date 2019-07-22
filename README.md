@@ -7,8 +7,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;[Views](#Views)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Engine](#Engine)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Transports](#Transports)\
-&nbsp;&nbsp;&nbsp;&nbsp;[Display Layer](#Display-Layer)
-[The power of Reflow](#The-power-of-Reflow)
+&nbsp;&nbsp;&nbsp;&nbsp;[Display Layer](#Display-Layer)\
+[The power of Reflow](#The-power-of-Reflow)\
 [Further Reading](#Further-Reading)
 
 # Reflow
@@ -219,7 +219,7 @@ You can use the already implemented React display layer using `@mcesystems/reflo
 
 ## The power of Reflow
 Lets tie it all up - we'll build 3 pieces:
-* Display layer container - a browser that will contain the display layer and use the `my-views-package` views (we'll user the `@mcesystems/reflow-react-display-layer` here), we'll also use WebSocket for the engine-to-display-layer communication 
+* Display layer container - a browser that will contain the display layer and use the `my-views-package` views (we'll use the `@mcesystems/reflow-react-display-layer` here), we'll also use WebSocket for the engine-to-display-layer communication 
 * Flow1 - a node application that will use the views in some way
 * Flow2 - a node application that will use the views in another way
 
