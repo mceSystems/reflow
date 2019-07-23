@@ -1,8 +1,8 @@
 {
-	"name": "@mcesystems/reflow-example-cancelable-flow",
+	"name": "@mcesystems/reflow-example-flow-events",
 	"private": true,
 	"version": "1.0.0",
-	"description": "A ui-less flow that shows how flows can be canceled in mid-operation",
+	"description": "A ui-less flow that shows how flows can use event to communication between child/parent flows",
 	"main": "dist/index",
 	"scripts": {
 		"build": "tsc"

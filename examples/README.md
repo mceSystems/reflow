@@ -9,5 +9,6 @@ It's important to mention again that the usage of React as the views implementat
 [presentation](./presentation) - Demonstrates the relationship the relationship between a view and its children, and how the flow controls it.\
 [theming](./theming) - Demonstrates viewerParameters option of `Reflow` constructor and flow function, that affects the display layer general arguments.\
 [cancelable-flow](./cancelable-flow) - Demonstrates how flows can be canceled in mid operation.\
+[flow-events](./flow-events) - Demonstrates how flows can use events to communication between parent/child flows.\
 
 
