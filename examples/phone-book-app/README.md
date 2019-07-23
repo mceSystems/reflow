@@ -4,5 +4,5 @@ This is a phone book implementation that demonstrates an app being built in a se
 ## Running
 `npm install` \
 and \
-`npm run build`
+`npm run build`\
 Then open `display-layer-container/index.html` and run `node ./server`

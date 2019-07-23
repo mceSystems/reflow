@@ -382,7 +382,7 @@ And here too - webpack with index.ts as the entry to create your bundle.js and t
 
 A good idea in such a case would be to create a shared package which initializes the display layer and engine and get the main flow as a parameter - so here too the flows are the only changed element between one app to another.
 
-See the [simple-to-do-react](./examples/simple-to-do-react) example to see such a use case in action
+See the [simple-to-do](./examples/simple-to-do) example to see such a use case in action
 
 ### Examples
 See [Examples](./examples)
