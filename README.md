@@ -1,6 +1,7 @@
 [Reflow](#Reflow)  
 &nbsp;&nbsp;&nbsp;&nbsp;[When should I use reflow?](#when-should-i-use-reflow?)\
-&nbsp;&nbsp;&nbsp;&nbsp;[Before we begin - Typescript!](#Before-we-begin-typescript!)\
+&nbsp;&nbsp;&nbsp;&nbsp;[Before we begin - Typescript!](#Before-we-begin---typescript!)\
+&nbsp;&nbsp;&nbsp;&nbsp;[Before we begin 2 - a word about React and Reflow](#Before-we-begin-#2---a-word-about-React-and-Reflow)\
 [Core concepts](#Core-concepts)  
 &nbsp;&nbsp;&nbsp;&nbsp;[View Interfaces](#View-Interfaces)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Flows](#Flows)\
@@ -9,9 +10,9 @@
 &nbsp;&nbsp;&nbsp;&nbsp;[Transports](#Transports)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Display Layer](#Display-Layer)\
 [The power of Reflow](#The-power-of-Reflow)\
-[Use case 1 - node application flows with browser display layer](#Use-case-1-node-application-flows-with-browser-display-layer)
-[Use case 2 - application flows and display layer in browser](#Use-case-2-application-flows-and-display-layer-in-browser)
-[Further Reading](#Further-Reading)
+&nbsp;&nbsp;&nbsp;&nbsp;[Use case 1 - node application flows with browser display layer](#Use-case-1---node-application-flows-with-browser-display-layer)\
+&nbsp;&nbsp;&nbsp;&nbsp;[Use case 2 - application flows and display layer in browser](#Use-case-2---application-flows-and-display-layer-in-browser)\
+[Examples](#Examples)
 
 # Reflow
 Reflow is an application-flow and UI management library. \
@@ -30,8 +31,15 @@ Reflow is not suitable to serve as the engine for any application. In most of th
 * You want to separate flow development from UI development (i.e. two teams working in parallel)
 
 ### Before we begin - Typescript!
-As you'll see in the docs, examples and the library's code, Typescript is a version important element of the power of Reflow. \
-If you're not a fan - consider being one :)
+As you'll see in the docs, examples and the library's code, Typescript is a very important element of the power of Reflow. \
+If you're not a fan - consider being one :)\
+Besides build-time errors when using things wrong, using editors/IDEs with proper Typescript support (e.g. VSCode) will provide you a very descriptive autocompletion. For example, writing your view interfaces will benefit 
+
+### Before we begin #2 - a word about React and Reflow
+First of all - Reflow is not bound to use React. As you'll see in the docs, React is just one possible implementation of a viewer to Reflow.\
+That said, React is currently the only implemented display layer as we at the mceSystems simply use React.\
+If Vue, Angular or any other method is needed, you may request it as an issue, or build one your self and do a PR.
+
 
 ## Core concepts
 The 3 elements of a Reflow-based application are *flows*, *views* and *view-interfaces*.
@@ -232,8 +240,8 @@ Of course this is just an example of using Reflow - not necessarily a best pract
 #### Display layer container
 Due to the fact that the display layer "knows" all the views in `my-views-package`, we can build a browser application that will serve any flow that uses the interfaces from `my-view-interfaces-package`:
 ```typescript
-// index.ts
-import { Transports, Reflow } from "@mcesystems/reflow";
+// display-container/index.ts
+import { Transports } from "@mcesystems/reflow";
 import { renderDisplayLayer } from "@mcesystems/reflow-react-display-layer";
 
 import { views } from "my-views-package";
@@ -247,7 +255,7 @@ renderDisplayLayer({
 });
 ```
 ```html
-<!--index.html-->
+<!--display-container/index.html-->
 <body>
 	<div id="main"></div>
 	<script src="bundle.js"></script>
@@ -258,7 +266,7 @@ Then we'll webpack - and that's it! we have a single browser app that can displa
 #### Flow1 & Flow1
 Let's take the flow from the example above and create a Reflow engine instance that will run it
 ```typescript
-// index.ts
+// app/flow1.ts
 import { Transports, Reflow, Flow } from "@mcesystems/reflow";
 import { ViewInterfacesType, viewInterfaces } from "my-view-interfaces-package";
 
@@ -285,7 +293,7 @@ reflow.start(flow1).then(() => {
 
 Now, using the same view interfaces, we create a different application, that uses other views
 ```typescript
-// index.ts
+// app/flow2.ts
 import { Transports, Reflow, Flow } from "@mcesystems/reflow";
 import { ViewInterfacesType, viewInterfaces } from "my-view-interfaces-package";
 
@@ -302,13 +310,79 @@ reflow.start(flow2).then(() => {
 })
 ```
 
-Now running the index in both cases creates a websocket server, and you can run the display layer container in your browser (from any machine visible to the server, just change the host) to view the application
+Now running the `node ./app/flow1.js` or `node ./app/flow2.js` in both cases creates a websocket server, and you can run the display layer container in your browser (from any machine visible to the server, just change the host) to view the application
 
 Of course the part of initiating the Reflow engine can also be separated to a shared module, or a separate application that gets the main flow as an argument, so the only changed part of your applications library is the flows themselves.
 
-### Use case 2 - application flows and display layer in browser
-TODO
+See the [phone-book-app](./examples/phone-book-app) example to see such a use case in action
 
-### Further reading
-[Reflow engine documentation](./packages/reflow/README.md)\
-[React display layer documentation](./packages/reflow-react-display-layer/README.md)
+### Use case 2 - application flows and display layer in browser
+In this use case we're using reflow to power an app that's completely in the browser - both flows and UI. Comparing to the first use-case the differences will be:
+* We'll initiate the display layer and engine in the same process (even in the same block of code)
+* We'll use the `InProcTransport` instead of `WebSocketsTransport`
+* For the sake of example, we'll call flow 2 from flow 1
+
+Let's start with the combined display layer container and engine initiation
+```typescript
+// index.ts
+import { Transports, Reflow } from "@mcesystems/reflow";
+import { renderDisplayLayer } from "@mcesystems/reflow-react-display-layer";
+
+import { ViewInterfacesType, viewInterfaces } from "my-view-interfaces-package";
+import { views } from "my-views-package";
+
+import flow1 from "./flows/flow1.ts"
+
+const transport = new Transports.InProcTransport({ });
+
+const reflow = new Reflow<ViewInterfacesType>({
+	transport,
+	views: viewInterfaces,
+});
+
+renderDisplayLayer({
+	element: document.getElementById("main"),
+	transport,
+	views,
+});
+
+reflow.start(flow1).then(() => {
+	console.log("flow1 is finished")
+});
+```
+```typescript
+// flows/flow1.ts
+import { Flow } from "@mcesystems/reflow";
+import { ViewInterfacesType } from "my-view-interfaces-package";
+import flow2 from "./flow2.ts";
+
+export default <Flow<ViewInterfacesType>>(async ({ view, views, flow }) => {
+	const myView = view(0, views.MyView, {
+		myInProp: "Hello Prop",
+		mySecondInProp: "Some text"
+	});
+	myView.on("myTriggeredEvent", ({ myEventData }) => {
+		// do something with the event's data
+	});
+	await flow(flow2);
+	const { myOutProp } = await myView;
+	// ...
+});
+```
+```typescript
+// flows/flow2.ts
+import { Flow } from "@mcesystems/reflow";
+import { ViewInterfacesType } from "my-view-interfaces-package";
+
+export default <Flow<ViewInterfacesType>>(async ({ view, views }) => {
+	await view(0, views.MyOtherView, {});
+});
+```
+And here too - webpack with index.ts as the entry to create your bundle.js and there you go!
+
+A good idea in such a case would be to create a shared package which initializes the display layer and engine and get the main flow as a parameter - so here too the flows are the only changed element between one app to another.
+
+See the [simple-to-do-react](./examples/simple-to-do-react) example to see such a use case in action
+
+### Examples
+See [Examples](./examples)

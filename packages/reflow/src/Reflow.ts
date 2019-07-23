@@ -4,12 +4,6 @@ import { ViewsMapInterface, ViewInterface } from "./View";
 import { v4 } from "uuid";
 import { ReflowTransport } from "./Transports";
 
-/* tslint:disable-next-line:interface-over-type-literal */
-type ToolkitView<ViewsMap extends ViewsMapInterface> = {
-	<T extends ViewsMap[keyof ViewsMap]>(layer: number, type: T, input?: T["input"]): ViewProxy<ViewsMap, T>,
-	<T extends ViewsMap[keyof ViewsMap]>(viewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>, layer: number, type: T, input?: T["input"]): ViewProxy<ViewsMap, T>,
-};
-
 export interface Strings {
 	[locale: string]: {
 		[key: string]: string;
@@ -38,7 +32,7 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	/**
 	 * Start new view
 	 */
-	view: ToolkitView<ViewsMap>;
+	view: <T extends ViewsMap[keyof ViewsMap]>(layer: number, type: T, input?: T["input"], viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>) => ViewProxy<ViewsMap, T>
 	/**
 	 * Views dictionary to use with the view function
 	 */
@@ -226,12 +220,9 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		const reducedStack = this.cleanViewTree(this.viewStack);
 		this.transport.sendViewTree(reducedStack);
 	}
-	private view<T extends ViewsMap[keyof ViewsMap]>(flowViewStackIndex: number, viewParentUid: string | null, layer: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | number, type: T | number, input?: T["input"] | T, optionalInput?: never | T["input"]): ViewProxy<ViewsMap, T> {
-		if (layer instanceof ViewProxy) {
-			viewParentUid = this.getViewUid(layer);
-			layer = type as number;
-			type = input;
-			input = optionalInput;
+	private view<T extends ViewsMap[keyof ViewsMap]>(flowViewStackIndex: number, viewParentUid: string | null, layer: number, type: T, input?: T["input"], viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>): ViewProxy<ViewsMap, T> {
+		if (viewParent) {
+			viewParentUid = this.getViewUid(viewParent);
 		}
 
 		let viewName: string;

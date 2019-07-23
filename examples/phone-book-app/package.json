@@ -1,0 +1,24 @@
+{
+	"name": "@mcesystems/reflow-example-phone-book-app",
+	"private": true,
+	"version": "1.0.0",
+	"description": "A form filling wizard demonstrating a Reflow with a server-client connection",
+	"main": "dist/index",
+	"scripts": {
+		"build": "tsc && cd ./display-layer-container && webpack && cd .."
+	},
+	"author": "mceSystems",
+	"dependencies": {
+		"@mcesystems/reflow": "3.9.0",
+		"@mcesystems/reflow-react-display-layer": "3.9.0"
+	},
+	"devDependencies": {
+		"awesome-typescript-loader": "^5.2.1",
+		"react": "^16.8.6",
+		"source-map-loader": "^0.2.4",
+		"typescript": "^3.5.3",
+		"webpack": "^4.36.1",
+		"webpack-cli": "^3.3.6",
+		"webpack-dev-server": "^3.7.2"
+	}
+}
