@@ -1,8 +1,8 @@
-import TodoListInterface from "../viewInterfaces/TextView";
+import TextViewInterface from "../viewInterfaces/TextView";
 import { ReflowReactComponent } from "@mcesystems/reflow-react-display-layer";
 import * as React from "react";
 
-class TextView extends ReflowReactComponent<TodoListInterface> {
+class TextView extends ReflowReactComponent<TextViewInterface> {
 	render() {
 		const { languages, header, subHeader, event } = this.props;
 		return (
