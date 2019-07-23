@@ -385,4 +385,4 @@ A good idea in such a case would be to create a shared package which initializes
 See the [simple-to-do](./examples/simple-to-do) example to see such a use case in action
 
 ### Examples
-See [Examples](./examples)
+For examples and further documentation, see [Examples](./examples)
