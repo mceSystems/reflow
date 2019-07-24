@@ -33,12 +33,12 @@ Reflow is not suitable to serve as the engine for any application. In most of th
 ### Before we begin - Typescript!
 As you'll see in the docs, examples and the library's code, Typescript is a very important element of the power of Reflow. \
 If you're not a fan - consider being one :)\
-Besides build-time errors when using things wrong, using editors/IDEs with proper Typescript support (e.g. VSCode) will provide you a very descriptive autocompletion. For example, writing your view interfaces will benefit 
+Besides build-time errors when using things wrong, using editors/IDEs with proper Typescript support (e.g. VSCode) will provide you a very descriptive autocompletion.
 
 ### Before we begin #2 - a word about React and Reflow
 First of all - Reflow is not bound to use React. As you'll see in the docs, React is just one possible implementation of a viewer to Reflow.\
-That said, React is currently the only implemented display layer as we at the mceSystems simply use React.\
-If Vue, Angular or any other method is needed, you may request it as an issue, or build one your self and do a PR.
+That said, React is currently the only implemented display layer as we at mceSystems simply use React.\
+If Vue, Angular or any other method is needed, you may request it as an issue, or build one your self and submit a PR.
 
 
 ## Core concepts
@@ -47,9 +47,9 @@ These are the "moving-parts" of the application and are being digested by the *e
 
 ### View Interfaces
 These are the contracts which are used for implementing and communicating between flows and views.\
-View interfaces contain the Typescript definition for each view's (basically any UI component) input/output properties, triggered events (including events' data).\
+View interfaces contain the Typescript definition for each view's (basically any UI component) input/output properties and triggered events (including events' data).\
 This way, when developing, there is an explicit definition of which views, what input/output and what events can be used by flows and views.\
-When running the view interface is used only to indicate what view is to be used.
+When running, the view interface is used only to indicate what view is to be used.
 
 A simple view interface might look like this:
 ```typescript
@@ -118,7 +118,7 @@ export default <Flow<ViewInterfacesType>>(async ({ view, views }) => {
 ```
 
 ### Views
-Views are the implementations of each view interface using the defined input/output properties and events.\
+Views are the implementation of each view interface using the defined input/output properties and events.\
 For example, a React implementation of a view will use the view interface's input as its component's props.\
 Using methods described below, the view will have the option to trigger events and to inform the flow that the view is done, and return output parameter.\
 The usage of input/output and events is of course optional, and should be determined when designing the view. This is due to the fact that some views have no triggered events, or has no "done" logic. \
