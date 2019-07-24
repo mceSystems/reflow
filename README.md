@@ -385,4 +385,5 @@ A good idea in such a case would be to create a shared package which initializes
 See the [simple-to-do](./examples/simple-to-do) example to see such a use case in action
 
 ### Examples
-For examples and further documentation, see [Examples](./examples)
+For examples and further documentation, see [Examples](./examples)\
+If you're familiar with lerna, you can run `lerna bootstrap` in the repo root instead of `npm install`-ing in each example.

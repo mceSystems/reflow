@@ -7,7 +7,7 @@
 	"scripts": {
 		"dev": "tsc --watch",
 		"build": "tsc",
-		"prepublishOnly": "npm run build"
+		"prepublish": "npm run build"
 	},
 	"repository": {
 		"url": "https://github.com/mceSystems/reflow"
