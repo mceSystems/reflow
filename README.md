@@ -1,7 +1,7 @@
 [Reflow](#Reflow)  
 &nbsp;&nbsp;&nbsp;&nbsp;[When should I use reflow?](#when-should-i-use-reflow?)\
-&nbsp;&nbsp;&nbsp;&nbsp;[Before we begin - Typescript!](#Before-we-begin---typescript!)\
-&nbsp;&nbsp;&nbsp;&nbsp;[Before we begin 2 - a word about React and Reflow](#Before-we-begin-#2---a-word-about-React-and-Reflow)\
+&nbsp;&nbsp;&nbsp;&nbsp;[Before we begin - Typescript!](#Before-we-begin---typescript)\
+&nbsp;&nbsp;&nbsp;&nbsp;[Before we begin 2 - a word about React and Reflow](#Before-we-begin-2---a-word-about-React-and-Reflow)\
 [Core concepts](#Core-concepts)  
 &nbsp;&nbsp;&nbsp;&nbsp;[View Interfaces](#View-Interfaces)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Flows](#Flows)\
