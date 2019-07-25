@@ -2,7 +2,8 @@
 &nbsp;&nbsp;&nbsp;&nbsp;[When should I use reflow?](#when-should-i-use-reflow?)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Before we begin - Typescript!](#Before-we-begin---typescript)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Before we begin 2 - a word about React and Reflow](#Before-we-begin-2---a-word-about-React-and-Reflow)\
-[Core concepts](#Core-concepts)  
+[Install](#Install)\
+[Core concepts](#Core-concepts)\
 &nbsp;&nbsp;&nbsp;&nbsp;[View Interfaces](#View-Interfaces)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Flows](#Flows)\
 &nbsp;&nbsp;&nbsp;&nbsp;[Views](#Views)\
@@ -40,6 +41,8 @@ First of all - Reflow is not bound to use React. As you'll see in the docs, Reac
 That said, React is currently the only implemented display layer as we at mceSystems simply use React.\
 If Vue, Angular or any other method is needed, you may request it as an issue, or build one your self and submit a PR.
 
+## Install
+`npm install @mcesystems/reflow`
 
 ## Core concepts
 The 3 elements of a Reflow-based application are *flows*, *views* and *view-interfaces*.
