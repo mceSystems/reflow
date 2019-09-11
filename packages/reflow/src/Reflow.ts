@@ -12,6 +12,7 @@ export interface Strings {
 export class TranslateableString extends String {
 	public __reflowOriginalString: string = "";
 	public __reflowTranslateable: boolean = true;
+	public __reflowTemplateDictionary: { [token: string]: any } = {};
 	constructor(...args) {
 		super(...args);
 	}
@@ -44,7 +45,7 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	/**
 	 * Translatable string
 	 */
-	tx: (str: string) => string;
+	tx: (str: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) => string;
 	/**
 	 * Update strings dictionary
 	 */
@@ -83,13 +84,15 @@ export interface ViewTree<ViewsMap extends ViewsMapInterface> {
 
 export type ReducedViewTree<ViewsMap extends ViewsMapInterface> = Array<ReducedViewTreeItem<ViewsMap, ViewsMap[keyof ViewsMap]>>;
 
-const createTranslateableString = (original: string, value: string): string => {
+const createTranslateableString = (original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string => {
 	// @ts-ignore
 	const translateable = new String(value);
 	// @ts-ignore
 	translateable.__reflowOriginalString = original;
 	// @ts-ignore
 	translateable.__reflowTranslateable = true;
+	// @ts-ignore
+	translateable.__reflowTemplateDictionary = templateDictionary || {};
 	// @ts-ignore
 	return translateable;
 };
@@ -132,7 +135,11 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	}
 	private translate(strings: Strings, str: TranslateableString): string {
 		const dict = strings[this.currentLanguage] || {};
-		return createTranslateableString(str.__reflowOriginalString, dict[str.__reflowOriginalString] || str.__reflowOriginalString);
+		let translated = dict[str.__reflowOriginalString] || str.__reflowOriginalString;
+		for(const key in str.__reflowTemplateDictionary){
+			translated = translated.replace(new RegExp(`\\\${${key}}\\$`, "g"), str.__reflowTemplateDictionary[key]);
+		}
+		return createTranslateableString(str.__reflowOriginalString, translated, str.__reflowTemplateDictionary);
 	}
 	private translateInput<T extends { [str: string]: any }>(strings: Strings, input: T): T {
 		for (const key in input) {
@@ -171,8 +178,8 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			view: this.view.bind(this, flowViewStackIndex, viewParentUid),
 			views: this.views,
 			viewerParameters: this.updateViewerParameters.bind(this),
-			tx: (str: string) => {
-				return createTranslateableString(str, str);
+			tx: (str: string, templateDictionary?: { [token: string]: any }) => {
+				return createTranslateableString(str, str, templateDictionary);
 			},
 			language: (language: string) => {
 				this.currentLanguage = language;
