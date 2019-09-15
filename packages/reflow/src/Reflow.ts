@@ -136,9 +136,9 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	private translate(strings: Strings, str: TranslateableString): string {
 		const dict = strings[this.currentLanguage] || {};
 		let translated = dict[str.__reflowOriginalString] || str.__reflowOriginalString;
-		for(const key in str.__reflowTemplateDictionary){
-			translated = translated.replace(new RegExp(`\\\${${key}}\\$`, "g"), str.__reflowTemplateDictionary[key]);
-		}
+		translated = translated.replace(/\$\{(.*?)\}\$/, (_, token) => {
+			return str.__reflowTemplateDictionary[token];
+		});
 		return createTranslateableString(str.__reflowOriginalString, translated, str.__reflowTemplateDictionary);
 	}
 	private translateInput<T extends { [str: string]: any }>(strings: Strings, input: T): T {
