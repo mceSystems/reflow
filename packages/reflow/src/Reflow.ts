@@ -80,6 +80,7 @@ export interface ReducedViewTreeItem<ViewsMap extends ViewsMapInterface, T exten
 export interface ViewTree<ViewsMap extends ViewsMapInterface> {
 	views: Array<ViewTreeItem<ViewsMap, ViewsMap[keyof ViewsMap]>>;
 	strings: Strings;
+	done: boolean;
 }
 
 export type ReducedViewTree<ViewsMap extends ViewsMapInterface> = Array<ReducedViewTreeItem<ViewsMap, ViewsMap[keyof ViewsMap]>>;
@@ -250,7 +251,12 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			workingStack[flowViewStackIndex] = {
 				strings: {},
 				views: [],
+				done: false,
 			};
+		}
+		if(workingStack[flowViewStackIndex].done){
+			// done flow stack - block viewing new views
+			return;
 		}
 		const workingTree: ViewTree<ViewsMap> = workingStack[flowViewStackIndex];
 
@@ -306,6 +312,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			workingStack[flowViewStackIndex] = {
 				strings: {},
 				views: [],
+				done: false,
 			};
 		}
 		if (flow instanceof FlowProxy) {
@@ -315,7 +322,9 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		}
 		flowProxy.then((result) => {
 			// when a flow finishes, remove all its views
+			// mark as done so no accidental views are added afterwards
 			if (workingStack[flowViewStackIndex]) {
+				workingStack[flowViewStackIndex].done = true;
 				workingStack[flowViewStackIndex].views.splice(0);
 				this.update();
 			}
@@ -323,7 +332,9 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		}).catch((err) => {
 			if (err && err instanceof CancellationError) {
 				// when a flow is canceled, remove all its views
+				// mark as done so no accidental views are added afterwards
 				if (workingStack[flowViewStackIndex]) {
+					workingStack[flowViewStackIndex].done = true;
 					workingStack[flowViewStackIndex].views.splice(0);
 					this.update();
 				}
