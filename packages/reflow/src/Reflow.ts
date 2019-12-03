@@ -13,6 +13,7 @@ export class TranslateableString extends String {
 	public __reflowOriginalString: string = "";
 	public __reflowTranslateable: boolean = true;
 	public __reflowTemplateDictionary: { [token: string]: any } = {};
+	public toJSON: (original: string) => string;
 	constructor(...args) {
 		super(...args);
 	}
@@ -85,17 +86,15 @@ export interface ViewTree<ViewsMap extends ViewsMapInterface> {
 
 export type ReducedViewTree<ViewsMap extends ViewsMapInterface> = Array<ReducedViewTreeItem<ViewsMap, ViewsMap[keyof ViewsMap]>>;
 
-const createTranslateableString = (original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string => {
-	// @ts-ignore
-	const translateable = new String(value);
-	// @ts-ignore
+const createTranslateableString = (original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"], toJsonHandler?: TranslateableString["toJSON"]): string => {
+	const translateable = new String(value) as TranslateableString;
 	translateable.__reflowOriginalString = original;
-	// @ts-ignore
 	translateable.__reflowTranslateable = true;
-	// @ts-ignore
 	translateable.__reflowTemplateDictionary = templateDictionary || {};
-	// @ts-ignore
-	return translateable;
+	if (toJsonHandler) {
+		translateable.toJSON = toJsonHandler;
+	}
+	return translateable as unknown as string;
 };
 
 export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
@@ -134,13 +133,22 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			this.update();
 		});
 	}
-	private translate(strings: Strings, str: TranslateableString): string {
+	private translateableStringToJsonHandler(strings: Strings, original: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
 		const dict = strings[this.currentLanguage] || {};
-		let translated = dict[str.__reflowOriginalString] || str.__reflowOriginalString;
-		translated = translated.replace(/\$\{(.*?)\}\$/, (_, token) => {
-			return str.__reflowTemplateDictionary[token];
-		});
-		return createTranslateableString(str.__reflowOriginalString, translated, str.__reflowTemplateDictionary);
+		let translated = dict[original] || original;
+		if (templateDictionary) {
+			translated = translated.replace(/\$\{(.*?)\}\$/, (_, token) => {
+				return templateDictionary[token];
+			});
+		}
+		return translated;
+	}
+	private createTranslateableString(strings: Strings, original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
+		return createTranslateableString(original, value, templateDictionary, this.translateableStringToJsonHandler.bind(this, strings, original, templateDictionary));
+	}
+	private translate(strings: Strings, str: TranslateableString): string {
+		const translated = this.translateableStringToJsonHandler(strings, str.__reflowOriginalString, str.__reflowTemplateDictionary);
+		return this.createTranslateableString(strings, str.__reflowOriginalString, translated, str.__reflowTemplateDictionary);
 	}
 	private translateInput<T extends { [str: string]: any }>(strings: Strings, input: T): T {
 		for (const key in input) {
@@ -180,7 +188,9 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			views: this.views,
 			viewerParameters: this.updateViewerParameters.bind(this),
 			tx: (str: string, templateDictionary?: { [token: string]: any }) => {
-				return createTranslateableString(str, str, templateDictionary);
+				const workingStack = this.getViewStack(viewParentUid);
+				const flowStack = workingStack[flowViewStackIndex];
+				return this.createTranslateableString(flowStack.strings, str, str, templateDictionary);
 			},
 			language: (language: string) => {
 				this.currentLanguage = language;
@@ -254,7 +264,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 				done: false,
 			};
 		}
-		if(workingStack[flowViewStackIndex].done){
+		if (workingStack[flowViewStackIndex].done) {
 			// done flow stack - block viewing new views
 			return;
 		}
