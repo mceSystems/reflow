@@ -137,7 +137,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		const dict = strings[this.currentLanguage] || {};
 		let translated = dict[original] || original;
 		if (templateDictionary) {
-			translated = translated.replace(/\$\{(.*?)\}\$/, (_, token) => {
+			translated = translated.replace(/\$\{(.*?)\}\$/g, (_, token) => {
 				return templateDictionary[token];
 			});
 		}
