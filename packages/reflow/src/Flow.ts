@@ -76,7 +76,7 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 
 	private flowRouteRunning: boolean = false;
 	private flowRouteCurrentEntryIndex: number = -1;
-	private flowRouteBreakingPromiseResolver: () => void;
+	private flowRouteContinuePromiseResolver: () => void;
 	private flowRoute: FlowRoute = [];
 	private backOutput: Output | undefined;
 	private currentStepActions: ActionPromise<any>[] = [];
@@ -266,21 +266,21 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 		if (-1 === this.flowRouteCurrentEntryIndex) {
 			this.flowRouteCurrentEntryIndex = 0;
 		}
-		for (; this.flowRouteCurrentEntryIndex < this.flowRoute.length; this.flowRouteCurrentEntryIndex++) {
+		for (; (-1 !== this.flowRouteCurrentEntryIndex) && (this.flowRouteCurrentEntryIndex < this.flowRoute.length); this.flowRouteCurrentEntryIndex++) {
 			const entry = this.flowRoute[this.flowRouteCurrentEntryIndex];
 			if (FlowRoutingEntryType.Step !== entry.type) {
 				continue;
 			}
 			const { handler, onResolved } = (<FlowRoutingStep<any>>entry);
-			const breakingPromise = new Promise((resolve) => {
-				this.flowRouteBreakingPromiseResolver = resolve;
+			const continuePromise = new Promise((resolve) => {
+				this.flowRouteContinuePromiseResolver = resolve;
 			});
 			this.currentStepActions.splice(0);
-			const { broke, data } = await Promise.race([
-				breakingPromise.then(() => ({ broke: true, data: null })),
-				handler().then((data) => ({ broke: false, data }))
+			const { shouldContinue, data } = await Promise.race([
+				continuePromise.then(() => ({ shouldContinue: true, data: null })),
+				handler().then((data) => ({ shouldContinue: false, data }))
 			]);
-			if (broke) {
+			if (shouldContinue) {
 				for (const action of this.currentStepActions) {
 					action.cancel();
 				}
@@ -288,8 +288,8 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 				onResolved(data);
 			}
 			this.currentStepActions.splice(0);
-			if (broke) {
-				break;
+			if (shouldContinue) {
+				continue;
 			}
 		}
 		this.flowRouteRunning = false;
@@ -379,15 +379,15 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 		}
 
 		// in case the flow route is running - resolve the route breaking promise
-		this.flowRouteBreakingPromiseResolver();
+		this.flowRouteContinuePromiseResolver();
 		if (-1 === backEntryIndex) {
+			this.flowRouteCurrentEntryIndex = -1;
 			// cancel flow if resolving because of back
 			this.doCancelFlow();
 			this.resolve(this.backOutput);
 			return;
 		}
 		this.flowRouteCurrentEntryIndex = backEntryIndex;
-		this.flowRouteRunning = false;
 		this.startFlowRoute();
 	}
 }
