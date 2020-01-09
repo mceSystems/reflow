@@ -37,8 +37,8 @@ export type FlowEventRegisterer<Events extends FlowEventsDescriptor> = <T extend
 export type FlowEventRemover<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => void;
 export type FlowAction = <T>(action: Promise<T>) => ActionPromise<T>;
 export type FlowStepRegisterer = (handler: () => Promise<void>, name?: string) => void;
-export type FlowBackPointRegisterer = () => void;
-export type FlowBack = () => void;
+export type FlowBackPointRegisterer = (id?: string) => void;
+export type FlowBack = (id?: string) => void;
 
 export type Flow<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}> =
 	(toolkit: FlowToolkit<ViewsMap> & {
