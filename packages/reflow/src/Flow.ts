@@ -4,7 +4,31 @@ import { ViewsMapInterface } from "./View";
 
 export class ActionPromise<T> extends Promise<T> {
 	onCanceled: (cb: () => void) => ActionPromise<T>;
+	cancel: () => void;
 }
+
+export enum FlowRoutingEntryType {
+	Step,
+	Back
+}
+
+export interface FlowRoutingEntry {
+	type: FlowRoutingEntryType;
+}
+
+export interface FlowRoutingStep<T> extends FlowRoutingEntry {
+	type: FlowRoutingEntryType.Step;
+	handler: () => Promise<T>;
+	onResolved: (result: T) => void
+	name?: string;
+}
+
+export interface FlowRoutingBack extends FlowRoutingEntry {
+	type: FlowRoutingEntryType.Back;
+	id?: string;
+}
+
+export type FlowRoute = FlowRoutingEntry[];
 
 export type FlowEventsDescriptor = object;
 export type FlowEventListener<Events extends FlowEventsDescriptor, T extends keyof Events> = (data: Events[T]) => void;
@@ -12,9 +36,25 @@ export type FlowEventsEmitter<Events extends FlowEventsDescriptor> = <T extends 
 export type FlowEventRegisterer<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => Promise<Events[T]>;
 export type FlowEventRemover<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => void;
 export type FlowAction = <T>(action: Promise<T>) => ActionPromise<T>;
+export type FlowStepRegisterer = (handler: () => Promise<void>, name?: string) => void;
+export type FlowBackPointRegisterer = () => void;
+export type FlowBack = () => void;
 
 export type Flow<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}> =
-	(toolkit: FlowToolkit<ViewsMap> & { input: Input, state: State, event: FlowEventsEmitter<Events>, on: FlowEventRegisterer<Notifications>, off: FlowEventRemover<Notifications>, action: FlowAction, onCanceled: (cb: () => void) => void, cancel: () => void }) => Promise<Output>;
+	(toolkit: FlowToolkit<ViewsMap> & {
+		input: Input,
+		state: State,
+		event: FlowEventsEmitter<Events>,
+		on: FlowEventRegisterer<Notifications>,
+		off: FlowEventRemover<Notifications>,
+		action: FlowAction,
+		onCanceled: (cb: () => void) => void,
+		cancel: () => void,
+		step: FlowStepRegisterer,
+		backPoint: FlowBackPointRegisterer,
+		back: FlowBack,
+		backOutput: (output: Output) => void;
+	}) => Promise<Output>;
 
 export class CancellationError { }
 
@@ -25,7 +65,7 @@ export interface FlowOptions {
 let tmpResolve = null;
 let tmpReject = null;
 export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}> extends Promise<Output> {
-	private resolve: () => void = () => { };
+	private resolve: (output: Output) => void = () => { };
 	private reject: (err?) => void = () => { };
 	private notificationListeners: { [T in keyof Notifications]?: Array<FlowEventListener<Notifications, T>> } = {};
 	private eventListeners: { [T in keyof Events]?: Array<FlowEventListener<Events, T>> } = {};
@@ -33,6 +73,14 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 	private cancellationPromiseEmitters: Array<() => void> = [];
 	private doCancelFlow: () => void;
 	private childFlows: Array<FlowProxy<ViewsMap, any, any, any, any, any>> = [];
+
+	private flowRouteRunning: boolean = false;
+	private flowRouteCurrentEntryIndex: number = -1;
+	private flowRouteBreakingPromiseResolver: () => void;
+	private flowRoute: FlowRoute = [];
+	private backOutput: Output | undefined;
+	private currentStepActions: ActionPromise<any>[] = [];
+
 	public flowProcedure: Flow<ViewsMap, Input, Output>;
 	public toolkit: FlowToolkit<ViewsMap>;
 	public state: State;
@@ -65,6 +113,10 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 		this.notify = this.notify.bind(this);
 		this.cancel = this.cancel.bind(this);
 		this.onCanceled = this.onCanceled.bind(this);
+		this.step = this.step.bind(this);
+		this.back = this.back.bind(this);
+		this.backPoint = this.backPoint.bind(this);
+		this.setBackOutput = this.setBackOutput.bind(this);
 
 		if (main) {
 			this.hookFlowFunction();
@@ -96,6 +148,10 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 			action: this.action,
 			cancel: this.cancel,
 			onCanceled: this.onCanceled,
+			step: this.step,
+			backPoint: this.backPoint,
+			backOutput: this.setBackOutput,
+			back: this.back,
 		})).then(this.resolve, this.reject);
 	}
 	private hookFlowFunction() {
@@ -158,13 +214,26 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 	}
 	private action<T>(action: Promise<T>): ActionPromise<T> {
 		let cancellationPromiseEmitter;
-		const racingPromise = <ActionPromise<T>>Promise.race([this.cancellationPromise, action]).then((res) => {
+		// actions can be either fulfilled with original promise result, canceled becasue:
+		// 1. flow was cancelled
+		// 2. specifically cancelling this specific action
+		let specificActionCancellationListener: () => void;
+		const specificActionCancellationPromise = new Promise((resolve) => {
+			specificActionCancellationListener = () => {
+				resolve(new CancellationError());
+			}
+		})
+		const racingPromise = <ActionPromise<T>>Promise.race([specificActionCancellationPromise, this.cancellationPromise, action]).then((res) => {
 			if (cancellationPromiseEmitter) {
 				const idx = this.cancellationPromiseEmitters.indexOf(cancellationPromiseEmitter);
 				if (-1 !== idx) {
 					this.cancellationPromiseEmitters.splice(idx, 1);
 				}
 				cancellationPromiseEmitter = null;
+			}
+			const currentStepActionIdx = this.currentStepActions.indexOf(racingPromise)
+			if (-1 !== currentStepActionIdx) {
+				this.currentStepActions.splice(currentStepActionIdx, 1)
 			}
 			if (!(res instanceof CancellationError)) {
 				return res;
@@ -179,7 +248,77 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 			return racingPromise;
 		};
 
+		racingPromise.cancel = () => {
+			if (specificActionCancellationListener) {
+				specificActionCancellationListener();
+			}
+		}
+
+		this.currentStepActions.push(racingPromise);
+
 		return racingPromise;
+	}
+	private async startFlowRoute() {
+		if (this.flowRouteRunning) {
+			return;
+		}
+		this.flowRouteRunning = true;
+		if (-1 === this.flowRouteCurrentEntryIndex) {
+			this.flowRouteCurrentEntryIndex = 0;
+		}
+		for (; this.flowRouteCurrentEntryIndex < this.flowRoute.length; this.flowRouteCurrentEntryIndex++) {
+			const entry = this.flowRoute[this.flowRouteCurrentEntryIndex];
+			if (FlowRoutingEntryType.Step !== entry.type) {
+				continue;
+			}
+			const { handler, onResolved } = (<FlowRoutingStep<any>>entry);
+			const breakingPromise = new Promise((resolve) => {
+				this.flowRouteBreakingPromiseResolver = resolve;
+			});
+			this.currentStepActions.splice(0);
+			const { broke, data } = await Promise.race([
+				breakingPromise.then(() => ({ broke: true, data: null })),
+				handler().then((data) => ({ broke: false, data }))
+			]);
+			if (broke) {
+				for (const action of this.currentStepActions) {
+					action.cancel();
+				}
+			} else {
+				onResolved(data);
+			}
+			this.currentStepActions.splice(0);
+			if (broke) {
+				break;
+			}
+		}
+		this.flowRouteRunning = false;
+	}
+	private step<T>(handler: () => Promise<T>, name?: string) {
+		return new Promise((resolve) => {
+			this.flowRoute.push(<FlowRoutingStep<T>>{
+				type: FlowRoutingEntryType.Step,
+				handler,
+				name,
+				onResolved: (res) => {
+					resolve(res);
+				}
+			});
+			this.startFlowRoute();
+		});
+
+	}
+	private backPoint(id?: string) {
+		if (id && this.flowRoute.find(entry => FlowRoutingEntryType.Back === entry.type && id === (<FlowRoutingBack>entry).id)) {
+			throw new Error("backPoint() was called with id that already exists");
+		}
+		this.flowRoute.push(<FlowRoutingBack>{
+			type: FlowRoutingEntryType.Back,
+			id,
+		});
+	}
+	private setBackOutput(output: Output) {
+		this.backOutput = output;
 	}
 	start() {
 		this.executeFlowProc();
@@ -208,5 +347,47 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 	}
 	onCanceled(cb: () => void) {
 		this.cancellationPromiseEmitters.push(cb);
+	}
+	back(id?: string) {
+		let backEntryIndex = -1;
+		if (id) {
+			backEntryIndex = this.flowRoute.findIndex(entry => {
+				if (FlowRoutingEntryType.Back !== entry.type) {
+					return false;
+				}
+				return id === (<FlowRoutingBack>entry).id
+			});
+			if(-1 === backEntryIndex){
+				throw new Error("called back() with id, but couldn't find this back-point");
+			}
+		} else {
+			// search for the previous back point - always search for the back entry before this.flowRouteCurrentEntryIndex
+			// and then search for the one before that - this is to ensure we're not always returning to the same point
+			// if non found - resolve
+			let foundFirst = false;
+			for (let i = this.flowRouteCurrentEntryIndex - 1; i >= 0; i--) {
+				if (FlowRoutingEntryType.Back !== this.flowRoute[i].type) {
+					continue;
+				}
+				if (!foundFirst) {
+					foundFirst = true;
+					continue;
+				}
+				backEntryIndex = i;
+				break;
+			}
+		}
+
+		// in case the flow route is running - resolve the route breaking promise
+		this.flowRouteBreakingPromiseResolver();
+		if (-1 === backEntryIndex) {
+			// cancel flow if resolving because of back
+			this.doCancelFlow();
+			this.resolve(this.backOutput);
+			return;
+		}
+		this.flowRouteCurrentEntryIndex = backEntryIndex;
+		this.flowRouteRunning = false;
+		this.startFlowRoute();
 	}
 }
