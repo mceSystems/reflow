@@ -126,9 +126,7 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 						cb();
 					}
 					// cancel all child flows
-					for (const childFlow of this.childFlows) {
-						childFlow.cancel();
-					}
+					this.cancelChildFlows();
 					resolve(new CancellationError());
 				};
 			});
@@ -136,6 +134,11 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 			if (autoStart) {
 				this.executeFlowProc();
 			}
+		}
+	}
+	private cancelChildFlows() {
+		for (const childFlow of this.childFlows) {
+			childFlow.cancel();
 		}
 	}
 	private executeFlowProc() {
@@ -152,7 +155,10 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 			backPoint: this.backPoint,
 			backOutput: this.setBackOutput,
 			back: this.back,
-		})).then(this.resolve, this.reject);
+		})).then(this.resolve, this.reject).catch(() => {}).then(() => {
+			// cancel child flow if any left
+			this.cancelChildFlows();
+		});
 	}
 	private hookFlowFunction() {
 		// hook on the toolkit flow() function so we can track child processes, and cancel them when this instance is canceled
@@ -357,7 +363,7 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 				}
 				return id === (<FlowRoutingBack>entry).id
 			});
-			if(-1 === backEntryIndex){
+			if (-1 === backEntryIndex) {
 				throw new Error("called back() with id, but couldn't find this back-point");
 			}
 		} else {
