@@ -1,7 +1,7 @@
 {
 	"name": "@mcesystems/reflow-example-presentation",
 	"private": true,
-	"version": "4.2.3",
+	"version": "4.2.4",
 	"description": "A slideshow app that shows view parent capabilities and how to control the view tree",
 	"main": "dist/index",
 	"scripts": {
@@ -9,8 +9,8 @@
 	},
 	"author": "mceSystems",
 	"dependencies": {
-		"@mcesystems/reflow": "^4.2.3",
-		"@mcesystems/reflow-react-display-layer": "^4.2.3"
+		"@mcesystems/reflow": "^4.2.4",
+		"@mcesystems/reflow-react-display-layer": "^4.2.4"
 	},
 	"devDependencies": {
 		"awesome-typescript-loader": "^5.2.1",
