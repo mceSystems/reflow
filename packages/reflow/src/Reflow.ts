@@ -54,7 +54,11 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	/**
 	 * Set language
 	 */
-	language: (language: string) => void;
+	language: (language: string, fallbackLanguages?: string[]) => void;
+	/**
+	 * Set fallback languages in case a key isn't found in the set language
+	 */
+	fallbackLanguages: (language: string[]) => void;
 
 }
 
@@ -109,12 +113,14 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	};
 	private viewerParameters: ViewerParameters;
 	private currentLanguage: string;
+	private currentFallbackLanguages: string[];
 
 	constructor({ transport, views, viewerParameters }: ReflowOptions<ViewsMap, ViewerParameters>) {
 		this.transport = transport;
 		this.views = views;
 		this.viewMap = {};
 		this.currentLanguage = "";
+		this.currentFallbackLanguages = [];
 		this.transport.onViewDone((uid, output) => {
 			if (!this.viewMap[uid]) {
 				return;
@@ -135,7 +141,15 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	}
 	private translateableStringToJsonHandler(strings: Strings, original: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
 		const dict = strings[this.currentLanguage] || {};
-		let translated = dict[original] || original;
+		let translated = dict[original];
+		if (!translated) {
+			const fallbackTranslationLanguage = this.currentFallbackLanguages.find(lang => (lang in strings) && (original in strings[lang]));
+			if (fallbackTranslationLanguage) {
+				translated = strings[fallbackTranslationLanguage][original];
+			} else {
+				translated = original;
+			}
+		}
 		if (templateDictionary) {
 			translated = translated.replace(/\$\{(.*?)\}\$/g, (_, token) => {
 				return templateDictionary[token];
@@ -192,8 +206,15 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 				const flowStack = workingStack[flowViewStackIndex];
 				return this.createTranslateableString(flowStack.strings, str, str, templateDictionary);
 			},
-			language: (language: string) => {
+			language: (language: string, fallbackLanguages?: string[]) => {
 				this.currentLanguage = language;
+				if (fallbackLanguages) {
+					this.currentFallbackLanguages = fallbackLanguages;
+				}
+				this.update();
+			},
+			fallbackLanguages: (languages: string[]) => {
+				this.currentFallbackLanguages = languages;
 				this.update();
 			},
 			strings: (strings: Strings) => {

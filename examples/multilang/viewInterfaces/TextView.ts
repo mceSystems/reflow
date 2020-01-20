@@ -4,6 +4,7 @@ import { ViewInterface } from "@mcesystems/reflow";
 export interface Input {
 	header: string;
 	subHeader: string;
+	notes: string[];
 	languages: string[];
 }
 

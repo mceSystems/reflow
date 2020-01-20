@@ -4,7 +4,7 @@ import * as React from "react";
 
 class TextView extends ReflowReactComponent<TextViewInterface> {
 	render() {
-		const { languages, header, subHeader, event } = this.props;
+		const { languages, header, subHeader, notes, event } = this.props;
 		return (
 			<div>
 				<select onChange={e => event("changeLanguage", { language: e.target.value })}>
@@ -14,6 +14,9 @@ class TextView extends ReflowReactComponent<TextViewInterface> {
 				</select>
 				<h1>{header}</h1>
 				<h5>{subHeader}</h5>
+				{
+					notes.map(note => (<div>{note}</div>))
+				}
 			</div>
 		);
 	}
