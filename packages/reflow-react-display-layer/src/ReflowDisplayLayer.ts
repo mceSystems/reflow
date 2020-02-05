@@ -1,9 +1,9 @@
 import { ReflowTransport, ViewsMapInterface, ReducedViewTree, ViewTreeItem, ReducedViewTreeItem, ViewInterface } from "@mcesystems/reflow";
-import { ReflowReactComponentClass } from "./ReflowReactComponent";
+import { ReflowReactComponentClass, ReflowReactComponentFunction } from "./ReflowReactComponent";
 import * as React from "react";
 
 export type ViewsComponents<ViewMap extends ViewsMapInterface> = {
-	[T in keyof ViewMap]?: ReflowReactComponentClass<ViewMap[T], any, any>;
+	[T in keyof ViewMap]?: ReflowReactComponentClass<ViewMap[T], any, any> | ReflowReactComponentFunction<ViewMap[T], any>;
 };
 
 export default class ReflowDisplayLayer<ViewMap extends ViewsMapInterface> extends React.Component<{ transport: ReflowTransport<any>, views: ViewsComponents<ViewMap> }, { viewTree: ReducedViewTreeItem<ViewsMapInterface, ViewInterface<any, any, any>>[] }> {
