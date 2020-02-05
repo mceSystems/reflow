@@ -1,6 +1,6 @@
 {
 	"name": "@mcesystems/reflow-react-display-layer",
-	"version": "4.2.5",
+	"version": "4.2.6",
 	"description": "React display layer for @mcesystems/reflow",
 	"main": "dist/index",
 	"typings": "dist/index",
