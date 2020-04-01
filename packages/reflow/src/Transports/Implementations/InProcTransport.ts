@@ -2,19 +2,8 @@ import { ReflowTransport } from "../ReflowTransport";
 import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
 
-let globalInWindowTransport: InProcTransport<any>;
 
 export default class InProcTransport<ViewerParameters = {}> extends ReflowTransport<ViewerParameters> {
-	constructor(connectionOptions: object) {
-		super(connectionOptions);
-		// single-toning this instance,
-		// so the engine and the display actually use the same object,
-		// as it call's it's own methods to pass tree and events
-		if (globalInWindowTransport) {
-			return globalInWindowTransport;
-		}
-		globalInWindowTransport = this;
-	}
 	initializeAsEngine() {
 		return Promise.resolve();
 	}
