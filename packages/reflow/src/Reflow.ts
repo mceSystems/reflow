@@ -14,6 +14,7 @@ export class TranslateableString extends String {
 	public __reflowTranslateable: boolean = true;
 	public __reflowTemplateDictionary: { [token: string]: any } = {};
 	public toJSON: (original: string) => string;
+	public primitive: (original: string) => string;
 	constructor(...args) {
 		super(...args);
 	}
@@ -46,7 +47,7 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	/**
 	 * Translatable string
 	 */
-	tx: (str: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) => string;
+	tx: (str: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) => string & { primitive: () => string };
 	/**
 	 * Update strings dictionary
 	 */
@@ -90,15 +91,20 @@ export interface ViewTree<ViewsMap extends ViewsMapInterface> {
 
 export type ReducedViewTree<ViewsMap extends ViewsMapInterface> = Array<ReducedViewTreeItem<ViewsMap, ViewsMap[keyof ViewsMap]>>;
 
-const createTranslateableString = (original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"], toJsonHandler?: TranslateableString["toJSON"]): string => {
+const createTranslateableString = (original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"], toJsonHandler?: TranslateableString["toJSON"]) => {
 	const translateable = new String(value) as TranslateableString;
 	translateable.__reflowOriginalString = original;
 	translateable.__reflowTranslateable = true;
 	translateable.__reflowTemplateDictionary = templateDictionary || {};
 	if (toJsonHandler) {
 		translateable.toJSON = toJsonHandler;
+		translateable.primitive = toJsonHandler;
+		translateable.toString = toJsonHandler as () => string;
+	} else {
+		translateable.toJSON = () => original;
+		translateable.primitive = () => original;
 	}
-	return translateable as unknown as string;
+	return translateable as unknown as string & { primitive: () => string };
 };
 
 export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
@@ -150,14 +156,14 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 				translated = original;
 			}
 		}
-		if (templateDictionary) {
+		if (templateDictionary && translated) {
 			translated = translated.replace(/\$\{(.*?)\}\$/g, (_, token) => {
 				return templateDictionary[token];
 			});
 		}
 		return translated;
 	}
-	private createTranslateableString(strings: Strings, original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
+	private createTranslateableString(strings: Strings, original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) {
 		return createTranslateableString(original, value, templateDictionary, this.translateableStringToJsonHandler.bind(this, strings, original, templateDictionary));
 	}
 	private translate(strings: Strings, str: TranslateableString): string {
