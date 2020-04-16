@@ -1,7 +1,7 @@
 {
 	"name": "@mcesystems/reflow-example-flow-events",
 	"private": true,
-	"version": "4.3.1",
+	"version": "4.3.2",
 	"description": "A ui-less flow that shows how flows can use event to communication between child/parent flows",
 	"main": "dist/index",
 	"scripts": {
@@ -9,7 +9,7 @@
 	},
 	"author": "mceSystems",
 	"dependencies": {
-		"@mcesystems/reflow": "^4.3.1"
+		"@mcesystems/reflow": "^4.3.2"
 	},
 	"devDependencies": {
 		"typescript": "^3.5.3"
