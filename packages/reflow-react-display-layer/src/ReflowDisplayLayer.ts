@@ -22,6 +22,7 @@ export default class ReflowDisplayLayer<ViewMap extends ViewsMapInterface> exten
 		return viewTree.map((view) => {
 			const Component = this.props.views[view.name];
 			const input = Object.assign({
+				key: view.uid,
 				children: this.viewTreeToElements(view.children),
 				done: this.props.transport.sendViewDone.bind(this.props.transport, view.uid),
 				event: this.props.transport.sendViewEvent.bind(this.props.transport, view.uid),
