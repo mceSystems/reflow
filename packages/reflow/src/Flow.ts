@@ -36,7 +36,7 @@ export type FlowEventsEmitter<Events extends FlowEventsDescriptor> = <T extends 
 export type FlowEventRegisterer<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => Promise<Events[T]>;
 export type FlowEventRemover<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => void;
 export type FlowAction = <T>(action: Promise<T>) => ActionPromise<T>;
-export type FlowStepRegisterer = (handler: () => Promise<void>, name?: string) => void;
+export type FlowStepRegisterer = <T>(handler: () => Promise<T>, name?: string) => T;
 export type FlowBackPointRegisterer = (id?: string) => void;
 export type FlowBack = (id?: string) => void;
 
@@ -151,7 +151,7 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 			action: this.action,
 			cancel: this.cancel,
 			onCanceled: this.onCanceled,
-			step: this.step,
+			step: this.step as FlowStepRegisterer,
 			backPoint: this.backPoint,
 			backOutput: this.setBackOutput,
 			back: this.back,
