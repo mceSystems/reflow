@@ -2,6 +2,7 @@ import { ReducedViewTree } from "../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../View";
 
 export type TransportViewEventListener = <T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: T["events"][U]) => void;
+export type TransportViewFunctionListener = <T extends ViewInterface<object, object, void, any>, U extends keyof T["functions"]> (uid: string, functionName: U, functionData: Parameters<T["functions"][U]>[0]) => ReturnType<T["functions"][U]> | void;
 export type TransportViewDoneListener = <T extends ViewInterface>(uid: string, output: T["output"]) => void;
 export type TransportViewStackUpdateListener = (tree: ReducedViewTree<ViewsMapInterface>) => void;
 export type TransportViewerParametersListener<ViewerParameters = {}> = (params: ViewerParameters) => void;
@@ -9,6 +10,7 @@ export type TransportSyncViewListener = () => void;
 
 export abstract class ReflowTransport<ViewerParameters = {}> {
 	protected viewEventListeners: Array<TransportViewEventListener> = [];
+	protected viewFunctionListeners: Array<TransportViewFunctionListener> = [];
 	protected viewDoneListeners: Array<TransportViewDoneListener> = [];
 	protected viewStackUpdateListeners: Array<TransportViewStackUpdateListener> = [];
 	protected viewerParametersListeners: Array<TransportViewerParametersListener<ViewerParameters>> = [];
@@ -46,6 +48,15 @@ export abstract class ReflowTransport<ViewerParameters = {}> {
 	 */
 	onViewEvent(listener: TransportViewEventListener): void {
 		this.viewEventListeners.push(listener);
+	}
+	/**
+	 * Registers an function listener on a specific view's event
+	 *
+	 * @param {TransportViewFunctionListener} listener function callback
+	 * @memberof ReflowTransport
+	 */
+	onViewFunction(listener: TransportViewFunctionListener): void {
+		this.viewFunctionListeners.push(listener);
 	}
 	/**
 	 * Registers a listener for views' done invocation, to get their output
@@ -92,6 +103,17 @@ export abstract class ReflowTransport<ViewerParameters = {}> {
 	 * @memberof ReflowTransport
 	 */
 	abstract sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: T["events"][U]): void;
+	/**
+	 * Sends a view function from the display to the engine
+	 *
+	 * @template T
+	 * @template U
+	 * @param {string} uid
+	 * @param {U} functionName
+	 * @param {T["events"][U]} functionData
+	 * @memberof ReflowTransport
+	 */
+	abstract sendViewFunction<T extends ViewInterface<{}, {}, {}, any>, U extends keyof T["functions"]>(uid: string, functionName: U, functionData: T["functions"][U]): Promise<ReturnType<T["functions"][U]> | undefined>;
 	/**
 	 * Sends a view done from the display to the engine, along with the view's output
 	 *

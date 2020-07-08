@@ -23,6 +23,21 @@ export default class InProcTransport<ViewerParameters = {}> extends ReflowTransp
 			listener(uid, eventName, eventData);
 		}
 	}
+	sendViewFunction<T extends ViewInterface<{}, {}, {}, any>, U extends keyof T["functions"]>(uid: string, functionName: U, functionData: T["functions"][U]): Promise<ReturnType<T["functions"][U]> | undefined>{
+		return new Promise<ReturnType<T["functions"][U]>>((resolve) => {
+			let finish = false;
+			for (const listener of this.viewFunctionListeners) {
+				const result = listener(uid, functionName, functionData);
+				if (result) {
+				finish = true;
+				resolve(result);
+			}
+		}
+		if (!finish) {
+			resolve();
+			}
+		});
+	}
 	sendViewDone<T extends ViewInterface>(uid: string, output: T["output"]): void {
 		for (const listener of this.viewDoneListeners) {
 			listener(uid, output);

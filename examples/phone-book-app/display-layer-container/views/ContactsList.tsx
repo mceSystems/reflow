@@ -4,7 +4,7 @@ import * as React from "react";
 
 class ContactsList extends ReflowReactComponent<ContactsListInterface> {
 	render() {
-		const { title, contacts, event } = this.props;
+		const { title, contacts, event, call } = this.props;
 		return (
 			<div
 				style={{
@@ -40,6 +40,7 @@ class ContactsList extends ReflowReactComponent<ContactsListInterface> {
 									<div>{email}</div>
 								</div>
 								<button onClick={() => event("editContact", { id })}>Edit</button>
+								<button onClick={() => call("deleteContact", { id }).then((value) => alert(value ? "contact deleted" : "fail to delete contact"))}>Delete</button>
 							</div>
 						))
 					}
