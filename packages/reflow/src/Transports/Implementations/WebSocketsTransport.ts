@@ -32,30 +32,27 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 		this.__socket.on("connection", (socket) => {
 			socket
 				.on("view_event", <T extends ViewInterface, U extends keyof T["events"]>({ uid, requestId, eventName, eventData }: {uid: string; requestId: string; eventName: U; eventData: ParamsUnpack<T["events"][U]>}) => {
-					let finish = false;
+					let result: ReturnUnpack<T["events"][U]>;
 					for (const listener of this.viewEventListeners) {
-						const result = listener(uid, eventName, eventData);
-						if (result) {
-							finish = true;
-							if (Promise.resolve(result) === result) {
-								const promiseResult = result as Promise<PromiseUnpacked<typeof result>>;
-								promiseResult.then((eventResult) => {
-									this.__socket.emit("view_event_result", { uid, requestId, eventResult });
-								}).catch(() => {
-									this.__socket.emit("view_event_result", { uid, requestId });
-								});
-							} else {
-								this.__socket.emit("view_event_result", { uid, requestId, eventResult: result });
-							}
+						const listenerResult = listener(uid, eventName, eventData);
+						if (listenerResult) {
+							result = listenerResult;
 						}
 					}
-					if (!finish) {
+					if (result) {
+						if (Promise.resolve(result) === result) {
+							const promiseResult = result as Promise<PromiseUnpacked<typeof result>>;
+							promiseResult.then((eventResult) => {
+								this.__socket.emit("view_event_result", { uid, requestId, eventResult });
+								}).catch(() => {
+								this.__socket.emit("view_event_result", { uid, requestId });
+								});
+						} else {
+							this.__socket.emit("view_event_result", { uid, requestId, eventResult: result });
+						}
+					} else {
 						this.__socket.emit("view_function_result", { uid, requestId });
-					}
-					for (const listener of this.viewEventListeners) {
-						listener(uid, eventName, eventData);
-					}
-				})
+					}				})
 				.on("view_done", ({ uid, output }) => {
 					for (const listener of this.viewDoneListeners) {
 						listener(uid, output);
