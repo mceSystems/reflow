@@ -4,6 +4,7 @@ import { ViewInterface, ViewsMapInterface } from "../../View";
 
 import ServerSocket from "socket.io";
 import ClientSocket from "socket.io-client";
+import { ReturnUnpack, PromiseUnpacked, ParamsUnpack } from "../../ViewProxy";
 
 interface WebSocketConnectionOptions {
 	host?: string;
@@ -30,30 +31,29 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 		this.__socket = io;
 		this.__socket.on("connection", (socket) => {
 			socket
-				.on("view_event", <T extends ViewInterface, U extends keyof T["events"]>({ uid, eventName, eventData }: {uid: string; eventName: U; eventData: T["events"][U]}) => {
-					for (const listener of this.viewEventListeners) {
-						listener(uid, eventName, eventData);
-					}
-				})
-				.on("view_function", <T extends ViewInterface<object, object, void, { [name: string]: any }>, U extends keyof T["functions"]>({ uid, requestId, functionName, functionData }: {uid: string; requestId: string; functionName: any; functionData: Parameters<T["functions"][U]>[0]}) => {
+				.on("view_event", <T extends ViewInterface, U extends keyof T["events"]>({ uid, requestId, eventName, eventData }: {uid: string; requestId: string; eventName: U; eventData: ParamsUnpack<T["events"][U]>}) => {
 					let finish = false;
-					for (const listener of this.viewFunctionListeners) {
-						const result = listener(uid, functionName, functionData);
+					for (const listener of this.viewEventListeners) {
+						const result = listener(uid, eventName, eventData);
 						if (result) {
 							finish = true;
 							if (Promise.resolve(result) === result) {
-								result.then((functionResult) => {
-									this.__socket.emit("view_function_result", { uid, requestId, functionResult });
+								const promiseResult = result as Promise<PromiseUnpacked<typeof result>>;
+								promiseResult.then((eventResult) => {
+									this.__socket.emit("view_event_result", { uid, requestId, eventResult });
 								}).catch(() => {
-									this.__socket.emit("view_function_result", { uid, requestId });
+									this.__socket.emit("view_event_result", { uid, requestId });
 								});
 							} else {
-								this.__socket.emit("view_function_result", { uid, requestId, functionResult: result });
+								this.__socket.emit("view_event_result", { uid, requestId, eventResult: result });
 							}
 						}
 					}
 					if (!finish) {
 						this.__socket.emit("view_function_result", { uid, requestId });
+					}
+					for (const listener of this.viewEventListeners) {
+						listener(uid, eventName, eventData);
 					}
 				})
 				.on("view_done", ({ uid, output }) => {
@@ -94,26 +94,23 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 
 		return Promise.resolve(this);
 	}
-	sendViewFunction<T extends ViewInterface<{}, {}, {}, any>, U extends keyof T["functions"]>(uid: string, functionName: U, functionData: T["functions"][U]): Promise<ReturnType<T["functions"][U]> | undefined>{
-		this.requestIndex++;
-		const requestId = this.requestIndex;
-		return new Promise<ReturnType<T["functions"][U]>>((resolve) => {
-			this.__socket.on("view_function_result", (result: { uid: string, requestId: number, functionResult?: ReturnType<T["functions"][U]>}) => {
-				if (result.uid === uid, result.requestId === requestId) {
-					resolve(result.functionResult);
-				}
-			})
-			this.__socket.emit("view_function", { uid, requestId, functionName, functionData });
-		})
-	}
 	sendViewSync() {
 		this.__socket.emit("view_sync", {});
 	}
 	sendViewTree(tree: ReducedViewTree<ViewsMapInterface>) {
 		this.__socket.emit("view_tree", { tree });
 	}
-	sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: T["events"][U]): void {
-		this.__socket.emit("view_event", { uid, eventName, eventData });
+	sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: ParamsUnpack<T["events"][U]>): Promise<ReturnUnpack<T["events"][U]>> {
+		this.requestIndex++;
+		const requestId = this.requestIndex;
+		return new Promise<ReturnUnpack<T["events"][U]>>((resolve) => {
+			this.__socket.on("view_event_result", (result: { uid: string, requestId: number, eventResult?: ReturnUnpack<T["events"][U]>}) => {
+				if (result.uid === uid, result.requestId === requestId) {
+					resolve(result.eventResult);
+				}
+			})
+			this.__socket.emit("view_event", { uid, requestId, eventName, eventData });
+		});
 	}
 	sendViewerParameters(viewerParameters: ViewerParameters): void {
 		this.__socket.emit("viewer_parameters", { parameters: viewerParameters });

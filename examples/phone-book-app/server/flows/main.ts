@@ -13,7 +13,7 @@ export default <Flow<ViewInterfacesType>>(async ({ view, views, flow }) => {
 		contacts,
 		title: "My Contacts"
 	})
-		.implement("deleteContact", async ({ id }) => {
+		.on("deleteContact", async ({ id }) => {
 			if (contacts.find((contact) => contact.id === id)) {
 				contacts = contacts.filter((contact) => contact.id !== id);
 				contactList.update({ contacts });

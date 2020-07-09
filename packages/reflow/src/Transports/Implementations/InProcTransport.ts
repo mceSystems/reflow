@@ -1,6 +1,7 @@
 import { ReflowTransport } from "../ReflowTransport";
 import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
+import { ReturnUnpack, ParamsUnpack } from "../../ViewProxy";
 
 
 export default class InProcTransport<ViewerParameters = {}> extends ReflowTransport<ViewerParameters> {
@@ -18,16 +19,11 @@ export default class InProcTransport<ViewerParameters = {}> extends ReflowTransp
 			listener(JSON.parse(JSON.stringify(tree)));
 		}
 	}
-	sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: T["events"][U]): void {
-		for (const listener of this.viewEventListeners) {
-			listener(uid, eventName, eventData);
-		}
-	}
-	sendViewFunction<T extends ViewInterface<{}, {}, {}, any>, U extends keyof T["functions"]>(uid: string, functionName: U, functionData: T["functions"][U]): Promise<ReturnType<T["functions"][U]> | undefined>{
-		return new Promise<ReturnType<T["functions"][U]>>((resolve) => {
+	sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: ParamsUnpack<T["events"][U]>): Promise<ReturnUnpack<T["events"][U]>> {
+		return new Promise<ReturnUnpack<T["events"][U]>>((resolve) => {
 			let finish = false;
-			for (const listener of this.viewFunctionListeners) {
-				const result = listener(uid, functionName, functionData);
+			for (const listener of this.viewEventListeners) {
+				const result = listener(uid, eventName, eventData);
 				if (result) {
 				finish = true;
 				resolve(result);
