@@ -1,10 +1,6 @@
 import * as React from "react";
 import { ViewInterface, ParamsUnpack, ReturnUnpack, PromiseUnpacked } from "@mcesystems/reflow";
 
-type Unpacked<T> = // unpack if promise
-    T extends Promise<infer U> ? U :
-    T;
-
 export type ReflowReactComponentProps<T extends ViewInterface<any, any, any>, ExternalProps = void> = T["input"] & {
 	children?: React.ReactNode[],
 	event: <U extends keyof T["events"]>(eventName: U, eventData: ParamsUnpack<T["events"][U]>) => Promise<PromiseUnpacked<ReturnUnpack<T["events"][U]>>>;
