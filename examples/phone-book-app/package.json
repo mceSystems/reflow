@@ -5,7 +5,8 @@
 	"description": "A form filling wizard demonstrating a Reflow with a server-client connection",
 	"main": "dist/index",
 	"scripts": {
-		"build": "tsc && cd ./display-layer-container && webpack && cd .."
+		"build": "tsc && cd ./display-layer-container && webpack && cd ..",
+		"dev:web": "cd ./display-layer-container && webpack-dev-server && cd .."
 	},
 	"author": "mceSystems",
 	"dependencies": {

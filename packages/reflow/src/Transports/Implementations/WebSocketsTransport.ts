@@ -43,15 +43,15 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 						if (Promise.resolve(result) === result) {
 							const promiseResult = result as Promise<PromiseUnpacked<typeof result>>;
 							promiseResult.then((eventResult) => {
-								this.__socket.emit("view_event_result", { uid, requestId, eventResult });
+									socket.emit("view_event_result", { uid, requestId, eventResult });
 								}).catch(() => {
-								this.__socket.emit("view_event_result", { uid, requestId });
+									socket.emit("view_event_result", { uid, requestId });
 								});
 						} else {
-							this.__socket.emit("view_event_result", { uid, requestId, eventResult: result });
+							socket.emit("view_event_result", { uid, requestId, eventResult: result });
 						}
 					} else {
-						this.__socket.emit("view_function_result", { uid, requestId });
+						socket.emit("view_function_result", { uid, requestId });
 					}				})
 				.on("view_done", ({ uid, output }) => {
 					for (const listener of this.viewDoneListeners) {
