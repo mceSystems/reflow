@@ -2,3 +2,4 @@
 !webpack.config.js
 *.js.map
 *.d.ts
+build/*

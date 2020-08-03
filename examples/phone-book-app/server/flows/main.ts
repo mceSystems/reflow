@@ -15,6 +15,7 @@ export default <Flow<ViewInterfacesType>>(async ({ view, views, flow }) => {
 	})
 		.on("newContact", async () => {
 			console.log("Got new contact request");
+			// @ts-ignore
 			const newContact = await flow(editContact, {}) as ContactListEntry;
 			newContact.id = `contact-${Math.random()}`;
 			console.log(`Created contact ${newContact.id}`);
