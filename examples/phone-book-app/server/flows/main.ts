@@ -4,9 +4,11 @@ import { ViewInterfacesType } from "../../viewInterfaces";
 import { ContactListEntry } from "../../viewInterfaces/ContactsList";
 
 import editContact from "./editContact";
+import { transport } from "..";
 
 export default <Flow<ViewInterfacesType>>(async ({ view, views, flow }) => {
 	console.log("Entered main flow");
+	transport.emitWorkerEvent("test", "hello test");
 
 	const contacts: ContactListEntry[] = [];
 	const contactList = view(0, views.ContactsList, {

@@ -9,8 +9,20 @@ const worker = new Worker("./worker.js");
 
 const transport = new Transports.WebWorkerTransport({ worker });
 
+const testHandler = (data) => {
+  console.log(data);
+  transport.removeWorkerEventListener("test", testHandler);
+};
+
+transport.addWorkerEventListener("test", testHandler);
+
+
 renderDisplayLayer({
 	element: document.getElementById("main"),
 	transport,
 	views,
 });
+
+transport.emitWorkerEvent("test", "hello from display test"); // should only get one message
+transport.emitWorkerEvent("test", "hello from display test");
+transport.emitWorkerEvent("test", "hello from display test");

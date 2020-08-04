@@ -9,22 +9,69 @@ interface WorkerConnectionOptions {
 interface WorkerEvent {
   name: string;
   data: any;
+  source: "__internal__" | "__external__";
 }
 
 interface MessageClient {
-  onmessage?: (message: WorkerEvent) => void;
+  onmessage?: (message: { data: WorkerEvent }) => void;
   readonly postMessage: (message: WorkerEvent) => void;
 }
 
 export default class WebSocketsTransport<
   ViewerParameters = {}
 > extends ReflowTransport<ViewerParameters> {
-  private __worker?: MessageClient;
+  private __worker: MessageClient = {
+    postMessage: () => {
+      throw new Error("can not emit to worker Reflow main flow is started.");
+    },
+  };
+
+  private eventListeners: Record<
+    string,
+    ((message: WorkerEvent) => void)[]
+  > = {};
 
   constructor(connectionOptions: WorkerConnectionOptions) {
     super(connectionOptions);
-    this.__worker = (connectionOptions.worker as unknown) as MessageClient;
+    if (connectionOptions.worker) {
+      this.__worker = (connectionOptions.worker as unknown) as MessageClient;
+    }
   }
+
+  public addWorkerEventListener = (
+    event: string,
+    handler: (data: any) => void
+  ) => {
+    if (!this.eventListeners[event]) {
+      this.eventListeners[event] = [];
+    }
+    this.eventListeners[event].push(handler);
+  };
+
+  public removeWorkerEventListener = (
+    event: string,
+    handler: (data: any) => void
+  ) => {
+    if (!this.eventListeners[event]) {
+      this.eventListeners[event] = [];
+    }
+    this.eventListeners[event] = this.eventListeners[event].filter(
+      (currentHandler) => currentHandler !== handler
+    );
+  };
+
+  public emitWorkerEvent = (event: string, data: any) => {
+    this.__worker.postMessage({ name: event, source: "__external__", data });
+  };
+
+  private onExternalEvent = (message: WorkerEvent) => {
+    if (this.eventListeners[message.name]) {
+      this.eventListeners[message.name].forEach((listener) =>
+        listener(message.data)
+      );
+    }
+  };
+
   initializeAsEngine() {
     this.__worker = (self as unknown) as MessageClient;
     const onViewEvent = <T extends ViewInterface, U extends keyof T["events"]>({
@@ -58,11 +105,23 @@ export default class WebSocketsTransport<
       } else if (event.name === "view_sync") {
         onViewSync(event.data);
       } else if (event.name === "connect") {
-        this.__worker.postMessage({ name: "connect", data: {} });
+        this.__worker.postMessage({
+          name: "connect",
+          data: {},
+          source: "__internal__",
+        });
       }
     };
-    this.__worker.onmessage = (message: WorkerEvent) => {
-      onEvent(message.data);
+    this.__worker.onmessage = (message) => {
+      if (!message || typeof message !== "object") {
+        return;
+      }
+      if (message.data.source === "__internal__") {
+        onEvent(message.data);
+      }
+      if (message.data.source === "__external__") {
+        this.onExternalEvent(message.data);
+      }
     };
 
     return Promise.resolve();
@@ -91,17 +150,39 @@ export default class WebSocketsTransport<
         onViewerParameters(event.data);
       }
     };
-    this.__worker.onmessage = (e) => onEvent(e.data);
-    this.__worker.postMessage({ name: "connect", data: {} });
+    this.__worker.onmessage = (message) => {
+      if (!message || typeof message !== "object") {
+        return;
+      }
+      if (message.data.source === "__internal__") {
+        onEvent(message.data);
+      }
+      if (message.data.source === "__external__") {
+        this.onExternalEvent(message.data);
+      }
+    };
+    this.__worker.postMessage({
+      name: "connect",
+      data: {},
+      source: "__internal__",
+    });
 
     return Promise.resolve(this);
   }
   sendViewSync() {
-    const event: WorkerEvent = { name: "view_sync", data: {} };
+    const event: WorkerEvent = {
+      name: "view_sync",
+      data: {},
+      source: "__internal__",
+    };
     this.__worker.postMessage(event);
   }
   sendViewTree(tree: ReducedViewTree<ViewsMapInterface>) {
-    const event: WorkerEvent = { name: "view_tree", data: { tree } };
+    const event: WorkerEvent = {
+      name: "view_tree",
+      data: { tree },
+      source: "__internal__",
+    };
     this.__worker.postMessage(event);
   }
   sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(
@@ -112,6 +193,7 @@ export default class WebSocketsTransport<
     const event: WorkerEvent = {
       name: "view_event",
       data: { uid, eventName, eventData },
+      source: "__internal__",
     };
     this.__worker.postMessage(event);
   }
@@ -119,6 +201,7 @@ export default class WebSocketsTransport<
     const event: WorkerEvent = {
       name: "viewer_parameters",
       data: { parameters: viewerParameters },
+      source: "__internal__",
     };
     this.__worker.postMessage(event);
   }
@@ -126,7 +209,11 @@ export default class WebSocketsTransport<
     uid: string,
     output: T["output"]
   ): void {
-    const event: WorkerEvent = { name: "view_done", data: { uid, output } };
+    const event: WorkerEvent = {
+      name: "view_done",
+      data: { uid, output },
+      source: "__internal__",
+    };
     this.__worker.postMessage(event);
   }
 }
