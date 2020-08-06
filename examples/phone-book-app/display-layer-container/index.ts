@@ -3,26 +3,26 @@ import { renderDisplayLayer } from "@mcesystems/reflow-react-display-layer";
 
 import { ViewInterfacesType, viewInterfaces } from "../viewInterfaces";
 import { views } from "./views";
-import mainFlow from "../server/flows/main";
 
-const worker = new Worker("./worker.js");
 
-const transport = new Transports.WebWorkerTransport({ worker });
+const transport = new Transports.WebWorkerTransport({ connection: new BroadcastChannel("main_service") });
 
 const testHandler = (data) => {
-  console.log(data);
-  transport.removeWorkerEventListener("test", testHandler);
+	console.log(data);
+	transport.removeWorkerEventListener("test", testHandler);
 };
 
-transport.addWorkerEventListener("test", testHandler);
-
-
-renderDisplayLayer({
-	element: document.getElementById("main"),
-	transport,
-	views,
-});
-
-transport.emitWorkerEvent("test", "hello from display test"); // should only get one message
-transport.emitWorkerEvent("test", "hello from display test");
-transport.emitWorkerEvent("test", "hello from display test");
+navigator.serviceWorker.register('./worker.js').then(() => {
+	transport.addWorkerEventListener("test", testHandler);
+	
+	
+	renderDisplayLayer({
+		element: document.getElementById("main"),
+		transport,
+		views,
+	});
+	
+	transport.emitWorkerEvent("test", "hello from display test"); // should only get one message
+	transport.emitWorkerEvent("test", "hello from display test");
+	transport.emitWorkerEvent("test", "hello from display test");
+})

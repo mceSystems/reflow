@@ -3,8 +3,15 @@ import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
 
 interface WorkerConnectionOptions {
-  worker?: Worker;
+  /**
+   * <pre> if your using web worker please pass the Worker from the diplay layer or self from the server. </pre>
+   * <pre> if your using web service please pass a the BroadcastChannel from both the diplay layer or the server. </pre>
+   * <pre> if you want to use custom event based transport please pass a MessageClient. </pre>
+   */
+  connection: Worker | MessageClient | BroadcastChannel | Window;
 }
+
+BroadcastChannel
 
 interface WorkerEvent {
   name: string;
@@ -33,9 +40,7 @@ export default class WebSocketsTransport<
 
   constructor(connectionOptions: WorkerConnectionOptions) {
     super(connectionOptions);
-    if (connectionOptions.worker) {
-      this.__worker = (connectionOptions.worker as unknown) as MessageClient;
-    }
+    this.__worker = (connectionOptions.connection as unknown) as MessageClient;
   }
 
   public addWorkerEventListener = (
@@ -73,7 +78,6 @@ export default class WebSocketsTransport<
   };
 
   initializeAsEngine() {
-    this.__worker = (self as unknown) as MessageClient;
     const onViewEvent = <T extends ViewInterface, U extends keyof T["events"]>({
       uid,
       eventName,

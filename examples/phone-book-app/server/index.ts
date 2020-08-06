@@ -2,7 +2,7 @@ import { Transports, Reflow } from "@mcesystems/reflow";
 import { ViewInterfacesType, viewInterfaces } from "../viewInterfaces";
 import mainFlow from "./flows/main";
 
-export const transport = new Transports.WebWorkerTransport({});
+export const transport = new Transports.WebWorkerTransport({ connection: new BroadcastChannel("main_service") });
 
 const testHandler = (data) => {
   console.log(data);
