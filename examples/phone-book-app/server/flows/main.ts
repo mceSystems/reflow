@@ -4,9 +4,11 @@ import { ViewInterfacesType } from "../../viewInterfaces";
 import { ContactListEntry } from "../../viewInterfaces/ContactsList";
 
 import editContact from "./editContact";
+import { transport } from "..";
 
 export default <Flow<ViewInterfacesType>>(async ({ view, views, flow }) => {
 	console.log("Entered main flow");
+	transport.emitWorkerEvent("test", "hello test");
 
 	let contacts: ContactListEntry[] = [];
 	const contactList = view(0, views.ContactsList, {
@@ -25,7 +27,7 @@ export default <Flow<ViewInterfacesType>>(async ({ view, views, flow }) => {
 		.on("newContact", async () => {
 			console.log("Got new contact request");
 			// @ts-ignore
-			const newContact = await flow(editContact, { }) as ContactListEntry;
+			const newContact = await flow(editContact, {}) as ContactListEntry;
 			newContact.id = `contact-${Math.random()}`;
 			console.log(`Created contact ${newContact.id}`);
 			contacts.push(newContact);
