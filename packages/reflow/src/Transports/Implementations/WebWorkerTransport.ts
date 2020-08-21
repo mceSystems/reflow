@@ -1,6 +1,7 @@
 import { ReflowTransport } from "../ReflowTransport";
 import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
+import { ParamsUnpack, ReturnUnpack, PromiseUnpacked } from "../../ViewProxy";
 
 interface WorkerConnectionOptions {
   /**
@@ -11,7 +12,7 @@ interface WorkerConnectionOptions {
   connection: Worker | MessageClient | BroadcastChannel | Window;
 }
 
-BroadcastChannel
+BroadcastChannel;
 
 interface WorkerEvent {
   name: string;
@@ -24,7 +25,7 @@ interface MessageClient {
   readonly postMessage: (message: WorkerEvent) => void;
 }
 
-export default class WebSocketsTransport<
+export default class WebWorkerTransport<
   ViewerParameters = {}
 > extends ReflowTransport<ViewerParameters> {
   private __worker: MessageClient = {
@@ -33,10 +34,16 @@ export default class WebSocketsTransport<
     },
   };
 
-  private eventListeners: Record<
+  private externalEventListeners: Record<
     string,
     ((message: WorkerEvent) => void)[]
   > = {};
+  private internalEventListeners: Record<
+    string,
+    ((message: WorkerEvent) => void)[]
+  > = {};
+
+  private requestIndex: number = 0;
 
   constructor(connectionOptions: WorkerConnectionOptions) {
     super(connectionOptions);
@@ -47,31 +54,65 @@ export default class WebSocketsTransport<
     event: string,
     handler: (data: any) => void
   ) => {
-    if (!this.eventListeners[event]) {
-      this.eventListeners[event] = [];
+    if (!this.externalEventListeners[event]) {
+      this.externalEventListeners[event] = [];
     }
-    this.eventListeners[event].push(handler);
+    this.externalEventListeners[event].push(handler);
+  };
+
+  private addInternalWorkerEventListener = (
+    event: string,
+    handler: (data: any) => void
+  ) => {
+    if (!this.internalEventListeners[event]) {
+      this.internalEventListeners[event] = [];
+    }
+    this.internalEventListeners[event].push(handler);
   };
 
   public removeWorkerEventListener = (
     event: string,
     handler: (data: any) => void
   ) => {
-    if (!this.eventListeners[event]) {
-      this.eventListeners[event] = [];
+    if (!this.externalEventListeners[event]) {
+      this.externalEventListeners[event] = [];
     }
-    this.eventListeners[event] = this.eventListeners[event].filter(
-      (currentHandler) => currentHandler !== handler
-    );
+    this.externalEventListeners[event] = this.externalEventListeners[
+      event
+    ].filter((currentHandler) => currentHandler !== handler);
+  };
+
+  public removeInternalWorkerEventListener = (
+    event: string,
+    handler: (data: any) => void
+  ) => {
+    if (!this.internalEventListeners[event]) {
+      this.internalEventListeners[event] = [];
+    }
+    this.internalEventListeners[event] = this.internalEventListeners[
+      event
+    ].filter((currentHandler) => currentHandler !== handler);
   };
 
   public emitWorkerEvent = (event: string, data: any) => {
     this.__worker.postMessage({ name: event, source: "__external__", data });
   };
 
+  public emitInternalWorkerEvent = (event: string, data: any) => {
+    this.__worker.postMessage({ name: event, source: "__internal__", data });
+  };
+
   private onExternalEvent = (message: WorkerEvent) => {
-    if (this.eventListeners[message.name]) {
-      this.eventListeners[message.name].forEach((listener) =>
+    if (this.externalEventListeners[message.name]) {
+      this.externalEventListeners[message.name].forEach((listener) =>
+        listener(message.data)
+      );
+    }
+  };
+
+  private onInternalEvent = (message: WorkerEvent) => {
+    if (this.internalEventListeners[message.name]) {
+      this.internalEventListeners[message.name].forEach((listener) =>
         listener(message.data)
       );
     }
@@ -80,15 +121,53 @@ export default class WebSocketsTransport<
   initializeAsEngine() {
     const onViewEvent = <T extends ViewInterface, U extends keyof T["events"]>({
       uid,
+      requestId,
       eventName,
       eventData,
     }: {
       uid: string;
+      requestId: string;
       eventName: U;
-      eventData: T["events"][U];
+      eventData: ParamsUnpack<T["events"][U]>;
     }) => {
+      let result: ReturnUnpack<T["events"][U]>;
       for (const listener of this.viewEventListeners) {
-        listener(uid, eventName, eventData);
+        const listenerResult = listener(uid, eventName, eventData);
+        if (listenerResult) {
+          result = listenerResult;
+        }
+        if (result) {
+          if (Promise.resolve(result) === result) {
+            const promiseResult = result as Promise<
+              PromiseUnpacked<typeof result>
+            >;
+            promiseResult
+              .then((eventResult) => {
+                this.emitInternalWorkerEvent("view_event_result", {
+                  uid,
+                  requestId,
+                  eventResult,
+                });
+              })
+              .catch(() => {
+                this.emitInternalWorkerEvent("view_event_result", {
+                  uid,
+                  requestId,
+                });
+              });
+          } else {
+            this.emitInternalWorkerEvent("view_event_result", {
+              uid,
+              requestId,
+              eventResult: result,
+            });
+          }
+        } else {
+          this.emitInternalWorkerEvent("view_function_result", {
+            uid,
+            requestId,
+          });
+        }
       }
     };
     const onViewDone = ({ uid, output }) => {
@@ -101,27 +180,16 @@ export default class WebSocketsTransport<
         listener();
       }
     };
-    const onEvent = (event: WorkerEvent) => {
-      if (event.name === "view_event") {
-        onViewEvent(event.data);
-      } else if (event.name === "view_done") {
-        onViewDone(event.data);
-      } else if (event.name === "view_sync") {
-        onViewSync(event.data);
-      } else if (event.name === "connect") {
-        this.__worker.postMessage({
-          name: "connect",
-          data: {},
-          source: "__internal__",
-        });
-      }
-    };
+
+    this.addInternalWorkerEventListener("view_event", onViewEvent);
+    this.addInternalWorkerEventListener("view_done", onViewDone);
+    this.addInternalWorkerEventListener("view_sync", onViewSync);
+    this.addInternalWorkerEventListener("connect", () =>
+      this.emitInternalWorkerEvent("connect", {})
+    );
     this.__worker.onmessage = (message) => {
-      if (!message || typeof message !== "object") {
-        return;
-      }
       if (message.data.source === "__internal__") {
-        onEvent(message.data);
+        this.onInternalEvent(message.data);
       }
       if (message.data.source === "__external__") {
         this.onExternalEvent(message.data);
@@ -145,79 +213,69 @@ export default class WebSocketsTransport<
       }
     };
 
-    const onEvent = (event: WorkerEvent) => {
-      if (event.name === "connect") {
-        onConnect();
-      } else if (event.name === "view_tree") {
-        onViewTree(event.data);
-      } else if (event.name === "viewer_parameters") {
-        onViewerParameters(event.data);
-      }
-    };
+    this.addInternalWorkerEventListener("connect", onConnect);
+    this.addInternalWorkerEventListener("view_tree", onViewTree);
+    this.addInternalWorkerEventListener(
+      "viewer_parameters",
+      onViewerParameters
+    );
+
     this.__worker.onmessage = (message) => {
       if (!message || typeof message !== "object") {
         return;
       }
       if (message.data.source === "__internal__") {
-        onEvent(message.data);
+        this.onInternalEvent(message.data);
       }
       if (message.data.source === "__external__") {
         this.onExternalEvent(message.data);
       }
     };
-    this.__worker.postMessage({
-      name: "connect",
-      data: {},
-      source: "__internal__",
-    });
+    this.emitInternalWorkerEvent("connect", {});
 
     return Promise.resolve(this);
   }
   sendViewSync() {
-    const event: WorkerEvent = {
-      name: "view_sync",
-      data: {},
-      source: "__internal__",
-    };
-    this.__worker.postMessage(event);
+    this.emitInternalWorkerEvent("view_sync", {});
   }
   sendViewTree(tree: ReducedViewTree<ViewsMapInterface>) {
-    const event: WorkerEvent = {
-      name: "view_tree",
-      data: { tree },
-      source: "__internal__",
-    };
-    this.__worker.postMessage(event);
+    this.emitInternalWorkerEvent("view_tree", { tree });
   }
   sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(
     uid: string,
     eventName: U,
-    eventData: T["events"][U]
-  ): void {
-    const event: WorkerEvent = {
-      name: "view_event",
-      data: { uid, eventName, eventData },
-      source: "__internal__",
-    };
-    this.__worker.postMessage(event);
+    eventData: ParamsUnpack<T["events"][U]>
+  ): Promise<ReturnUnpack<T["events"][U]>> {
+    this.requestIndex++;
+    const requestId = this.requestIndex;
+    return new Promise<ReturnUnpack<T["events"][U]>>((resolve) => {
+      this.addInternalWorkerEventListener(
+        "view_event_result",
+        (result: {
+          uid: string;
+          requestId: number;
+          eventResult?: ReturnUnpack<T["events"][U]>;
+        }) => {
+          if ((result.uid === uid, result.requestId === requestId)) {
+            resolve(result.eventResult);
+          }
+        }
+      );
+      this.emitInternalWorkerEvent("view_event", {
+        uid,
+        requestId,
+        eventName,
+        eventData,
+      });
+    });
   }
   sendViewerParameters(viewerParameters: ViewerParameters): void {
-    const event: WorkerEvent = {
-      name: "viewer_parameters",
-      data: { parameters: viewerParameters },
-      source: "__internal__",
-    };
-    this.__worker.postMessage(event);
+    this.emitInternalWorkerEvent("viewer_parameters", { parameters: viewerParameters });
   }
   sendViewDone<T extends ViewInterface>(
     uid: string,
     output: T["output"]
   ): void {
-    const event: WorkerEvent = {
-      name: "view_done",
-      data: { uid, output },
-      source: "__internal__",
-    };
-    this.__worker.postMessage(event);
+    this.emitInternalWorkerEvent("view_done", { uid, output });
   }
 }

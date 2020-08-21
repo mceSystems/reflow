@@ -9,6 +9,7 @@ import { ReturnUnpack, PromiseUnpacked, ParamsUnpack } from "../../ViewProxy";
 interface WebSocketConnectionOptions {
   host?: string;
   port?: number;
+  path?: string;
 }
 
 export default class WebSocketsTransport<
@@ -18,22 +19,25 @@ export default class WebSocketsTransport<
   private __socket: ServerSocket | ClientSocket;
   private __server?: Server;
   private requestIndex: number = 0;
-  constructor(connectionOptions: WebSocketConnectionOptions | undefined = {}, server?: Server) {
+  constructor(
+    connectionOptions: WebSocketConnectionOptions | undefined = {},
+    server?: Server
+  ) {
     super(connectionOptions);
     this.__connectionOptions = connectionOptions;
-	this.__socket = null;
-	this.__server = server;
+    this.__socket = null;
+    this.__server = server;
   }
 
   initializeAsEngine() {
-    const { port = 3000 , path = ""} = this.__connectionOptions || {};
+    const { port = 3000, path = "" } = this.__connectionOptions || {};
     if (this.__server) {
-		this.__socket = require("socket.io")(this.__server, { path });
-	} else {
-		const server = require("http").createServer();
-		this.__socket = require("socket.io")(server, { path });
-		server.listen(port);
-	}
+      this.__socket = require("socket.io")(this.__server, { path });
+    } else {
+      const server = require("http").createServer();
+      this.__socket = require("socket.io")(server, { path });
+      server.listen(port);
+    }
     this.__socket.on("connection", (socket) => {
       socket
         .on(
@@ -99,7 +103,8 @@ export default class WebSocketsTransport<
   }
   initializeAsDisplay() {
     const io = require("socket.io-client");
-    const { host = "localhost", port = 3000, path = "" } = this.__connectionOptions || {};
+    const { host = "localhost", port = 3000, path = "" } =
+      this.__connectionOptions || {};
     const socket = io(`http://${host}:${port}`, { path });
     this.__socket = socket;
     socket
