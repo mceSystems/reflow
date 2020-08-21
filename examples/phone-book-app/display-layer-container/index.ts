@@ -1,7 +1,5 @@
 import { Transports, Reflow } from "@mcesystems/reflow";
 import { renderDisplayLayer } from "@mcesystems/reflow-react-display-layer";
-
-import { ViewInterfacesType, viewInterfaces } from "../viewInterfaces";
 import { views } from "./views";
 
 

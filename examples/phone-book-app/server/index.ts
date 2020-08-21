@@ -1,6 +1,7 @@
 import { Transports, Reflow } from "@mcesystems/reflow";
 import { ViewInterfacesType, viewInterfaces } from "../viewInterfaces";
 import mainFlow from "./flows/main";
+import { createServer } from 'http'
 
 export const transport = new Transports.WebWorkerTransport({ connection: new BroadcastChannel("main_service") });
 
