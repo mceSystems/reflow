@@ -3,7 +3,7 @@ const path = require("path");
 module.exports = {
 	entry: "./index.ts",
 	output: {
-		filename: "bundle.js",
+		filename: "worker.js",
 		path: path.join(__dirname, "../build/"),
 	},
 	devtool: "source-map",

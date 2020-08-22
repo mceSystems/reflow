@@ -4,9 +4,20 @@ export type PartialViewInterfaceInput<ViewsMap extends ViewsMapInterface, T exte
 	[U in keyof T["input"]]?: T["input"][U]
 };
 
+export type ParamsUnpack<T> = T extends (params: infer U) => any ? U :
+    T;
+
+export type ReturnUnpack<T> = T extends (params: any) => infer U ? U :
+	void;
+
+export type PromiseUnpacked<T> =
+    T extends Promise<infer U> ? U :
+    T;
+
 export type ViewInterfaceEvents<ViewsMap extends ViewsMapInterface, T extends ViewsMap[keyof ViewsMap]> = keyof T["events"];
-export type ViewInterfaceEventData<ViewsMap extends ViewsMapInterface, T extends ViewsMap[keyof ViewsMap], U extends ViewInterfaceEvents<ViewsMap, T>> = T["events"][U];
-export type ViewInterfaceEventCallback<ViewsMap extends ViewsMapInterface, T extends ViewsMap[keyof ViewsMap], U extends ViewInterfaceEvents<ViewsMap, T>> = (data: ViewInterfaceEventData<ViewsMap, T, U>) => void;
+export type ViewInterfaceEventData<ViewsMap extends ViewsMapInterface, T extends ViewsMap[keyof ViewsMap], U extends ViewInterfaceEvents<ViewsMap, T>> = ParamsUnpack<T["events"][U]>;
+export type ViewInterfaceEventCallback<ViewsMap extends ViewsMapInterface, T extends ViewsMap[keyof ViewsMap], U extends ViewInterfaceEvents<ViewsMap, T>> = (data: ViewInterfaceEventData<ViewsMap, T, U>) => ReturnUnpack<T["events"][U]>;
+
 
 export type ViewOnUpdateCallback<ViewsMap extends ViewsMapInterface, T extends ViewsMap[keyof ViewsMap]> = (input: PartialViewInterfaceInput<ViewsMap, T>) => void;
 export type ViewOnRemoveCallback = () => void;
@@ -53,8 +64,15 @@ export class ViewProxy<ViewsMap extends ViewsMapInterface, T extends ViewsMap[ke
 		if (!this.eventListeners[eventName]) {
 			return;
 		}
+		let result: ReturnUnpack<T["events"][U]>;
 		for (const listener of this.eventListeners[eventName]) {
-			listener(data);
+			const listenerResult = listener(data);
+			if (listenerResult) {
+				result = listenerResult;
+			}
+		}
+		if (result) {
+			return result;
 		}
 	}
 	on<U extends ViewInterfaceEvents<ViewsMap, T>>(eventName: U, listener: ViewInterfaceEventCallback<ViewsMap, T, U>): ViewProxy<ViewsMap, T> {

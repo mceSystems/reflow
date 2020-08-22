@@ -1,9 +1,9 @@
 import * as React from "react";
-import { ViewInterface } from "@mcesystems/reflow";
+import { ViewInterface, ParamsUnpack, ReturnUnpack, PromiseUnpacked } from "@mcesystems/reflow";
 
 export type ReflowReactComponentProps<T extends ViewInterface<any, any, any>, ExternalProps = void> = T["input"] & {
 	children?: React.ReactNode[],
-	event: <U extends keyof T["events"]>(eventName: U, eventData: T["events"][U]) => void;
+	event: <U extends keyof T["events"]>(eventName: U, eventData: ParamsUnpack<T["events"][U]>) => Promise<PromiseUnpacked<ReturnUnpack<T["events"][U]>>>;
 	done: (output: T["output"]) => void;
 } & ExternalProps;
 

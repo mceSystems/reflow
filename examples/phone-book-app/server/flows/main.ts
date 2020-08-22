@@ -4,17 +4,29 @@ import { ViewInterfacesType } from "../../viewInterfaces";
 import { ContactListEntry } from "../../viewInterfaces/ContactsList";
 
 import editContact from "./editContact";
+import { transport } from "..";
 
 export default <Flow<ViewInterfacesType>>(async ({ view, views, flow }) => {
 	console.log("Entered main flow");
+	transport.emitWorkerEvent("test", "hello test");
 
-	const contacts: ContactListEntry[] = [];
+	let contacts: ContactListEntry[] = [];
 	const contactList = view(0, views.ContactsList, {
 		contacts,
 		title: "My Contacts"
 	})
+		.on("deleteContact", async ({ id }) => {
+			if (contacts.find((contact) => contact.id === id)) {
+				contacts = contacts.filter((contact) => contact.id !== id);
+				contactList.update({ contacts });
+				return true;
+			} else {
+				return false;
+			}
+		})
 		.on("newContact", async () => {
 			console.log("Got new contact request");
+			// @ts-ignore
 			const newContact = await flow(editContact, {}) as ContactListEntry;
 			newContact.id = `contact-${Math.random()}`;
 			console.log(`Created contact ${newContact.id}`);

@@ -1,7 +1,8 @@
 import { ReducedViewTree } from "../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../View";
+import { ReturnUnpack, ParamsUnpack } from "../ViewProxy";
 
-export type TransportViewEventListener = <T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: T["events"][U]) => void;
+export type TransportViewEventListener = <T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: ParamsUnpack<T["events"][U]>) => ReturnUnpack<T["events"][U]>;
 export type TransportViewDoneListener = <T extends ViewInterface>(uid: string, output: T["output"]) => void;
 export type TransportViewStackUpdateListener = (tree: ReducedViewTree<ViewsMapInterface>) => void;
 export type TransportViewerParametersListener<ViewerParameters = {}> = (params: ViewerParameters) => void;
@@ -82,7 +83,7 @@ export abstract class ReflowTransport<ViewerParameters = {}> {
 		this.viewStackUpdateListeners.push(listener);
 	}
 	/**
-	 * Sends a view event from the display to the engine
+	 * Sends a view event from the display to the engine and return last event result
 	 *
 	 * @template T
 	 * @template U
@@ -91,7 +92,7 @@ export abstract class ReflowTransport<ViewerParameters = {}> {
 	 * @param {T["events"][U]} eventData
 	 * @memberof ReflowTransport
 	 */
-	abstract sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: T["events"][U]): void;
+	abstract sendViewEvent<T extends ViewInterface, U extends keyof T["events"]>(uid: string, eventName: U, eventData: ParamsUnpack<T["events"][U]>): Promise<ReturnUnpack<T["events"][U]>>;
 	/**
 	 * Sends a view done from the display to the engine, along with the view's output
 	 *

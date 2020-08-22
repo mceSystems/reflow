@@ -13,6 +13,7 @@ export interface Events {
 		id: string
 	}
 	newContact: {}
+	deleteContact: (params: { id: string }) => Promise<boolean>;
 }
 
-export default interface ContactsList extends ViewInterface<Input, Events> { }
+export default interface ContactsList extends ViewInterface<Input, Events, void> { }

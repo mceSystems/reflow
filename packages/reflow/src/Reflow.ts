@@ -134,7 +134,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			if (!this.viewMap[uid]) {
 				return;
 			}
-			this.viewMap[uid].viewProxy.event(eventName, eventData);
+			return this.viewMap[uid].viewProxy.event(eventName, eventData);
 		});
 		this.viewerParameters = viewerParameters;
 		this.transport.onSyncView(() => {

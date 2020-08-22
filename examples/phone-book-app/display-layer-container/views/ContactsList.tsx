@@ -4,12 +4,12 @@ import * as React from "react";
 
 class ContactsList extends ReflowReactComponent<ContactsListInterface> {
 	render() {
-		const { title, contacts, event } = this.props;
+		const { title, contacts, event, } = this.props;
 		return (
 			<div
 				style={{
 					width: 512,
-					height: "100%",
+					height: "50%",
 					borderRadius: 5,
 					margin: "auto"
 				}}
@@ -40,6 +40,7 @@ class ContactsList extends ReflowReactComponent<ContactsListInterface> {
 									<div>{email}</div>
 								</div>
 								<button onClick={() => event("editContact", { id })}>Edit</button>
+								<button onClick={() => event("deleteContact", { id }).then((value) => alert(value ? "contact deleted" : "fail to delete contact"))}>Delete</button>
 							</div>
 						))
 					}
