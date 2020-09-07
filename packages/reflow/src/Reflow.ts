@@ -168,6 +168,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 				return templateDictionary[token];
 			});
 		}
+		history.lastTranslated = translated;
 		return translated;
 	}
 	private createTranslateableString(strings: Strings, original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) {
