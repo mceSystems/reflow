@@ -90,6 +90,11 @@ export interface ViewTree<ViewsMap extends ViewsMapInterface> {
 
 export type ReducedViewTree<ViewsMap extends ViewsMapInterface> = Array<ReducedViewTreeItem<ViewsMap, ViewsMap[keyof ViewsMap]>>;
 
+export interface TranslationCompareHistory {
+	lastTranslate: string;
+	lastTranslated: string;
+};
+
 const createTranslateableString = (original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"], toJsonHandler?: TranslateableString["toJSON"]) => {
 	const translateable = new String(value) as TranslateableString;
 	translateable.__reflowOriginalString = original;
@@ -103,6 +108,7 @@ const createTranslateableString = (original: string, value: string, templateDict
 	}
 	return translateable as unknown as string;
 };
+
 
 export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	private mainFlowProxy: FlowProxy<ViewsMap, any, any, any, any, any>;
@@ -142,9 +148,13 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			this.update();
 		});
 	}
-	private translateableStringToJsonHandler(strings: Strings, original: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
+	private translateableStringToJsonHandler(strings: Strings, original: string, history: TranslationCompareHistory, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
 		const dict = strings[this.currentLanguage] || {};
 		let translated = dict[original];
+		if (translated === history.lastTranslate) {
+			return history.lastTranslated;
+		}
+		history.lastTranslate = translated;
 		if (!translated) {
 			const fallbackTranslationLanguage = this.currentFallbackLanguages.find(lang => (lang in strings) && (original in strings[lang]));
 			if (fallbackTranslationLanguage) {
@@ -161,21 +171,11 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		return translated;
 	}
 	private createTranslateableString(strings: Strings, original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) {
-		return createTranslateableString(original, value, templateDictionary, this.translateableStringToJsonHandler.bind(this, strings, original, templateDictionary));
-	}
-	private translate(strings: Strings, str: TranslateableString): string {
-		const translated = this.translateableStringToJsonHandler(strings, str.__reflowOriginalString, str.__reflowTemplateDictionary);
-		return this.createTranslateableString(strings, str.__reflowOriginalString, translated, str.__reflowTemplateDictionary);
-	}
-	private translateInput<T extends { [str: string]: any }>(strings: Strings, input: T): T {
-		for (const key in input) {
-			if (input[key] && input[key].__reflowTranslateable) {
-				(<{ [str: string]: any }>input)[<string>key] = this.translate(strings, input[key]);
-			} else if ("object" === typeof input[key] && null !== input[key]) {
-				this.translateInput(strings, input[key]);
-			}
+		const defaultHistory: TranslationCompareHistory = {
+			lastTranslate: "",
+			lastTranslated: original,
 		}
-		return input;
+		return createTranslateableString(original, value, templateDictionary, this.translateableStringToJsonHandler.bind(this, strings, original, defaultHistory, templateDictionary));
 	}
 	private getViewUid(viewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>): string {
 		let viewParentUid = null;
@@ -231,19 +231,9 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	}
 	private cleanViewTree(viewTree: Array<ViewTree<ViewsMap>>): ReducedViewTree<ViewsMap> {
 		return (
-			viewTree
+			(JSON.parse(JSON.stringify(viewTree)) as typeof viewTree) // translate translateable strings
 				// filter out items in each ViewTree that are undefined/null
 				.map(n => n.views.filter(j => !!j))
-				// translate translateable strings
-				.map((n, i) => {
-					const { strings } = viewTree[i];
-					for (const view of n) {
-						if (view.input) {
-							this.translateInput(strings, view.input);
-						}
-					}
-					return n;
-				})
 				// filter out layers that are null/undefined or now, after the filter above are empty
 				.filter(n => !!n || n.length > 0)
 				// reduce the ViewTreeItem[][] to ViewTreeItem[]

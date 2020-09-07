@@ -20,7 +20,8 @@
 	},
 	"devDependencies": {
 		"@types/uuid": "^3.4.3",
-		"typescript": "^3.2.4"
+		"typescript": "^3.2.4",
+		"@types/node": "12.12.2"
 	},
 	"publishConfig": {
 		"access": "public"
