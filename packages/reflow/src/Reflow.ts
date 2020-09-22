@@ -233,6 +233,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	private cleanViewTree(viewTree: Array<ViewTree<ViewsMap>>): ReducedViewTree<ViewsMap> {
 		return (
 			(JSON.parse(JSON.stringify(viewTree)) as typeof viewTree) // translate translateable strings
+				.filter(n => n) // remove delete views
 				// filter out items in each ViewTree that are undefined/null
 				.map(n => n.views.filter(j => !!j))
 				// filter out layers that are null/undefined or now, after the filter above are empty
