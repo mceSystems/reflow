@@ -173,7 +173,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	}
 	private createTranslateableString(strings: Strings, original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) {
 		const defaultHistory: TranslationCompareHistory = {
-			lastTranslate: "",
+			lastTranslate: undefined,
 			lastTranslated: original,
 		}
 		return createTranslateableString(original, value, templateDictionary, this.translateableStringToJsonHandler.bind(this, strings, original, defaultHistory, templateDictionary));
