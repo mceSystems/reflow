@@ -155,7 +155,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			return history.lastTranslated;
 		}
 		history.lastTranslate = translated;
-		if (!translated) {
+		if (translated === undefined) {
 			const fallbackTranslationLanguage = this.currentFallbackLanguages.find(lang => (lang in strings) && (original in strings[lang]));
 			if (fallbackTranslationLanguage) {
 				translated = strings[fallbackTranslationLanguage][original];
@@ -163,7 +163,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 				translated = original;
 			}
 		}
-		if (templateDictionary && translated) {
+		if (templateDictionary && translated !== undefined) {
 			translated = translated.replace(/\$\{(.*?)\}\$/g, (_, token) => {
 				return templateDictionary[token];
 			});
