@@ -28,9 +28,10 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 		Output extends any,
 		State extends object,
 		Notifications extends object,
-		Events extends object
+		Events extends object,
+		ExternalEvants extends object,
 		// tslint:disable-next-line: max-line-length
-		>(flow: Flow<ViewsMap, Input, Output, State, Notifications, Events> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events>, input?: Input, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null, options?: FlowOptions) => FlowProxy<ViewsMap, Input, Output, State, Notifications, Events>;
+		>(flow: Flow<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>, input?: Input, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null, options?: FlowOptions) => FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>;
 	/**
 	 * Start new view
 	 */
@@ -59,8 +60,15 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	 * Set fallback languages in case a key isn't found in the set language
 	 */
 	fallbackLanguages: (language: string[]) => void;
-
+	/**
+	 * Send external events
+	 */
+	externalEvent: (eventName: string | number | symbol, data: any) => void;
 }
+
+export type ExternalEventsDescriptor = object;
+export type ExternalEventListener<ExternalEvents extends ExternalEventsDescriptor, T extends keyof ExternalEvents> = (data: ExternalEvents[T]) => void;
+type ExternalEventListen = (data: any) => void
 
 export interface ReflowOptions<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	transport: ReflowTransport<ViewerParameters>;
@@ -111,7 +119,7 @@ const createTranslateableString = (original: string, value: string, templateDict
 
 
 export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
-	private mainFlowProxy: FlowProxy<ViewsMap, any, any, any, any, any>;
+	private mainFlowProxy: FlowProxy<ViewsMap, any, any, any, any, any, any>;
 	private started: boolean = false;
 	private transport: ReflowTransport<ViewerParameters>;
 	private views: ViewsMap;
@@ -123,6 +131,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	private viewerParameters: ViewerParameters;
 	private currentLanguage: string;
 	private currentFallbackLanguages: string[];
+	private externalEventListeners: { [key: string]: Array<ExternalEventListen> } = {};
 
 	constructor({ transport, views, viewerParameters }: ReflowOptions<ViewsMap, ViewerParameters>) {
 		this.transport = transport;
@@ -228,6 +237,9 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 					flowStack.strings[locale] = Object.assign({}, flowStack.strings[locale], strings[locale]);
 				}
 			},
+			externalEvent: (eventName: string, data: any) => {
+				this.dispatchEvent(this.externalEventListeners, eventName, data );
+			},
 		};
 	}
 	private cleanViewTree(viewTree: Array<ViewTree<ViewsMap>>): ReducedViewTree<ViewsMap> {
@@ -317,10 +329,11 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		Output extends any,
 		State extends object,
 		Notifications extends object,
-		Events extends object
+		Events extends object,
+		ExternalEvants extends object,
 	>(
 		hiddenViewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>,
-		flow: Flow<ViewsMap, Input, Output, State, Notifications, Events> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events>,
+		flow: Flow<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>,
 		input?: Input,
 		viewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> = null,
 		options: FlowOptions = { autoStart: true },
@@ -367,6 +380,52 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		});
 		return flowProxy;
 	}
+
+	private registerEventListener<T extends ExternalEventsDescriptor, U extends keyof T>(listenersMap: object, eventName: string | number | symbol, listener?: (data) => void): Promise<T[U]> {
+		if (!listenersMap[eventName]) {
+			listenersMap[eventName] = [];
+		}
+		if (!listener) {
+			return new Promise((resolve) => {
+				const promiseListener = (data) => {
+					this.deleteEventListener(listenersMap, eventName, promiseListener);
+					resolve(data);
+				};
+				this.registerEventListener(listenersMap, eventName, promiseListener);
+			});
+		}
+		listenersMap[eventName].push(listener);
+	}
+
+	private deleteEventListener(listenersMap: object, eventName: string | number | symbol, listener?: (data) => void) {
+		if (!listenersMap[eventName]) {
+			return;
+		}
+		if (!listener) {
+			delete listenersMap[eventName];
+			return;
+		}
+
+		const listeners = [...listenersMap[eventName]];
+		for (const i in listeners) {
+			if (listener === listenersMap[eventName][i]) {
+				listenersMap[eventName].splice(i, 1);
+			}
+		}
+	}
+
+	private dispatchEvent(listenersMap: object, eventName: string | number | symbol, data: any) {
+		if (!listenersMap[eventName]) {
+			return;
+		}
+
+		// Making a copy since listeners might mess with the map (see @registerEventListener) which might mess up our iteration
+		const listeners = [...listenersMap[eventName]];
+		for (const listener of listeners) {
+			listener(data);
+		}
+	}
+
 	async start<Input extends any, Output extends any>(flow: Flow<ViewsMap, Input, Output>, input?: any) {
 		if (this.started) {
 			return Promise.reject("Cannot start more than once per instance");
@@ -381,5 +440,11 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			return;
 		}
 		this.mainFlowProxy.cancel();
+	}
+	addEventListener(name: string | number | symbol, listener?: ExternalEventListen ): Promise<any> {
+		return this.registerEventListener(this.externalEventListeners, name, listener);
+	}
+	removeEventListener(name: string | number | symbol, listener?: ExternalEventListen) {
+		this.deleteEventListener(this.externalEventListeners, name, listener);
 	}
 }

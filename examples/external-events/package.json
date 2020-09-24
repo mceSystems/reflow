@@ -1,0 +1,17 @@
+{
+	"name": "@mcesystems/reflow-example-external-events",
+	"private": true,
+	"version": "4.3.4",
+	"description": "",
+	"main": "dist/index",
+	"scripts": {
+		"build": "tsc"
+	},
+	"author": "mceSystems",
+	"dependencies": {
+		"@mcesystems/reflow": "^4.3.4"
+	},
+	"devDependencies": {
+		"typescript": "^3.5.3"
+	}
+}

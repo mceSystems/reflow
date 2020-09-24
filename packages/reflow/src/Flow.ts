@@ -40,7 +40,7 @@ export type FlowStepRegisterer = <T>(handler: () => Promise<T>, name?: string) =
 export type FlowBackPointRegisterer = (id?: string) => void;
 export type FlowBack = (id?: string) => void;
 
-export type Flow<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}> =
+export type Flow<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}, ExternalEvents extends FlowEventsDescriptor={}> =
 	(toolkit: FlowToolkit<ViewsMap> & {
 		input: Input,
 		state: State,
@@ -54,6 +54,7 @@ export type Flow<ViewsMap extends ViewsMapInterface, Input extends any = void, O
 		backPoint: FlowBackPointRegisterer,
 		back: FlowBack,
 		backOutput: (output: Output) => void;
+		externalEvent: FlowEventsEmitter<ExternalEvents>;
 	}) => Promise<Output>;
 
 export class CancellationError { }
@@ -64,7 +65,7 @@ export interface FlowOptions {
 
 let tmpResolve = null;
 let tmpReject = null;
-export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}> extends Promise<Output> {
+export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}, ExternalEvents extends FlowEventsDescriptor={}> extends Promise<Output> {
 	private resolve: (output: Output) => void = () => { };
 	private reject: (err?) => void = () => { };
 	private notificationListeners: { [T in keyof Notifications]?: Array<FlowEventListener<Notifications, T>> } = {};
@@ -85,7 +86,7 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 	public toolkit: FlowToolkit<ViewsMap>;
 	public state: State;
 	public input: Input;
-	constructor(executor: (resolve: () => void, reject: () => void) => FlowProxy<ViewsMap, Input, Output, State, Notifications, Events> | null, flowProc: Flow<ViewsMap, Input, Output, State>, toolkit: FlowToolkit<ViewsMap>, input?: Input, state?: State, options?: FlowOptions) {
+	constructor(executor: (resolve: () => void, reject: () => void) => FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvents> | null, flowProc: Flow<ViewsMap, Input, Output, State>, toolkit: FlowToolkit<ViewsMap>, input?: Input, state?: State, options?: FlowOptions) {
 		super(executor ? executor : (resolve, reject) => {
 			tmpResolve = resolve;
 			tmpReject = reject;
