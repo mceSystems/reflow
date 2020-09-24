@@ -1,6 +1,6 @@
 import { Transports, Reflow, Flow } from "@mcesystems/reflow";
 
-interface ExtrnalEvents {
+interface ExternalEvents {
 	myExternalEvent: {
 		data: string;
 	};
@@ -9,7 +9,7 @@ interface ExtrnalEvents {
 	}
 }
 
-const mainFlow = <Flow<{}, void, void, {}, {}, {}, ExtrnalEvents>>(async ({externalEvent}) => {
+const mainFlow = <Flow<{}, void, void, {}, {}, {}, ExternalEvents>>(async ({externalEvent}) => {
 	// this should trigger a console.log
 	externalEvent("myExternalEvent", {
 		data: "myExternalEventData"

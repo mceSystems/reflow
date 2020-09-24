@@ -41,7 +41,7 @@ export type FlowBackPointRegisterer = (id?: string) => void;
 export type FlowBack = (id?: string) => void;
 
 export type Flow<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}, ExternalEvents extends FlowEventsDescriptor={}> =
-	(toolkit: FlowToolkit<ViewsMap> & {
+	(toolkit: Omit<FlowToolkit<ViewsMap>, "externalEvent"> & {
 		input: Input,
 		state: State,
 		event: FlowEventsEmitter<Events>,
