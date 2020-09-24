@@ -66,9 +66,7 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	externalEvent: (eventName: string | number | symbol, data: any) => void;
 }
 
-export type ExternalEventsDescriptor = object;
-export type ExternalEventListener<ExternalEvents extends ExternalEventsDescriptor, T extends keyof ExternalEvents> = (data: ExternalEvents[T]) => void;
-type ExternalEventListen = (data: any) => void
+type ExternalEventListener = (data: any) => void
 
 export interface ReflowOptions<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	transport: ReflowTransport<ViewerParameters>;
@@ -131,7 +129,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	private viewerParameters: ViewerParameters;
 	private currentLanguage: string;
 	private currentFallbackLanguages: string[];
-	private externalEventListeners: { [key: string]: Array<ExternalEventListen> } = {};
+	private externalEventListeners: { [key: string]: Array<ExternalEventListener> } = {};
 
 	constructor({ transport, views, viewerParameters }: ReflowOptions<ViewsMap, ViewerParameters>) {
 		this.transport = transport;
@@ -237,7 +235,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 					flowStack.strings[locale] = Object.assign({}, flowStack.strings[locale], strings[locale]);
 				}
 			},
-			externalEvent: (eventName: string, data: any) => {
+			externalEvent: (eventName: string | number | symbol, data: any) => {
 				this.dispatchEvent(this.externalEventListeners, eventName, data );
 			},
 		};
@@ -381,7 +379,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		return flowProxy;
 	}
 
-	private registerEventListener<T extends ExternalEventsDescriptor, U extends keyof T>(listenersMap: object, eventName: string | number | symbol, listener?: (data) => void): Promise<T[U]> {
+	private registerEventListener<T extends object, U extends keyof T>(listenersMap: object, eventName: string | number | symbol, listener?: ExternalEventListener): Promise<T[U]> {
 		if (!listenersMap[eventName]) {
 			listenersMap[eventName] = [];
 		}
@@ -441,10 +439,10 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		}
 		this.mainFlowProxy.cancel();
 	}
-	addEventListener(name: string | number | symbol, listener?: ExternalEventListen ): Promise<any> {
+	addEventListener(name: string | number | symbol, listener?: ExternalEventListener ): Promise<any> {
 		return this.registerEventListener(this.externalEventListeners, name, listener);
 	}
-	removeEventListener(name: string | number | symbol, listener?: ExternalEventListen) {
+	removeEventListener(name: string | number | symbol, listener?: ExternalEventListener) {
 		this.deleteEventListener(this.externalEventListeners, name, listener);
 	}
 }
