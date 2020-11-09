@@ -156,9 +156,9 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		});
 	}
 	private translateableStringToJsonHandler(strings: Strings, original: string, history: TranslationCompareHistory, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
-		const dict = strings[this.currentLanguage] || {};
-		let translated = dict[original];
-		if (translated === history.lastTranslate) {
+		const dict = strings[this.currentLanguage];
+		let translated = (dict || {})[original];
+		if (dict && translated === history.lastTranslate) {
 			return history.lastTranslated;
 		}
 		history.lastTranslate = translated;
