@@ -1,31 +1,37 @@
 import { ReflowTransport } from "../ReflowTransport";
 import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
-
+import { Server } from "net";
 import ServerSocket from "socket.io";
 import ClientSocket from "socket.io-client";
 
 interface WebSocketConnectionOptions {
 	host?: string;
 	port?: number;
+	path?: string;
 }
 
 export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTransport<ViewerParameters> {
 	private __connectionOptions: WebSocketConnectionOptions;
-	private __socket: ServerSocket | ClientSocket;
+	private __socket: ServerSocket.Server | ClientSocket;
+	private __server?: Server;
 
-	constructor(connectionOptions: WebSocketConnectionOptions | undefined = {}) {
+	constructor(connectionOptions: WebSocketConnectionOptions | undefined = {}, server?: Server) {
 		super(connectionOptions);
 		this.__connectionOptions = connectionOptions;
 		this.__socket = null;
+		this.__server = server;
 	}
 	initializeAsEngine() {
-		const { port = 3000 } = this.__connectionOptions || {};
+		const { port = 3000, path = "" } = this.__connectionOptions || {};
 
-		const server = require("http").createServer();
-		const io = require("socket.io")(server);
-		server.listen(port);
-		this.__socket = io;
+		if (this.__server) {
+			this.__socket = require("socket.io")(this.__server, { path });
+		} else {
+			const server = require("http").createServer();
+			this.__socket = require("socket.io")(server, { path });
+			server.listen(port);
+		}
 		this.__socket.on("connection", (socket) => {
 			socket
 				.on("view_event", <T extends ViewInterface, U extends keyof T["events"]>({ uid, eventName, eventData }: {uid: string; eventName: U; eventData: T["events"][U]}) => {
@@ -49,12 +55,12 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 	}
 	initializeAsDisplay() {
 		const io = require("socket.io-client");
-		const { host = "localhost", port = 3000 } = this.__connectionOptions || {};
-
-		const socket = io(`http://${host}:${port}`);
-
-		this.__socket = socket;
-		socket
+		const { host = "localhost", port = 3000, path = "" } = this.__connectionOptions || {};
+		
+		const socket = io(`http://${host}:${port}`, { path });
+		
+		this.__socket = socket; 
+		this.__socket
 			.on("connect", () => {
 				this.sendViewSync();
 			})
