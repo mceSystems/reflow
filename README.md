@@ -16,6 +16,8 @@
 [Examples](#Examples)
 
 # Reflow
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FmceSystems%2Freflow.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FmceSystems%2Freflow?ref=badge_shield)
+
 Reflow is an application-flow and UI management library. \
 It provides a set of utilities to conveniently manage an application UI directly from descriptive and clear business logic code.
 
@@ -390,3 +392,7 @@ See the [simple-to-do](./examples/simple-to-do) example to see such a use case i
 ### Examples
 For examples and further documentation, see [Examples](./examples)\
 If you're familiar with lerna, you can run `lerna bootstrap` in the repo root instead of `npm install`-ing in each example.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FmceSystems%2Freflow.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FmceSystems%2Freflow?ref=badge_large)
