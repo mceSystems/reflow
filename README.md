@@ -135,7 +135,7 @@ import * as React from "react";
 // using ReflowReactComponent in this case provides the event() and done() callbacks.
 class MyView extends ReflowReactComponent<MyViewInterface> {
 	render() {
-		const { myInProp, event, done } = this.props;
+		const { myInProp, mySecondInProp, event, done } = this.props;
 		return (
 			<div>
 				<div>{myInProp}</div>
@@ -197,7 +197,7 @@ export default <Flow<ViewInterfacesType>>(async ({ view, views, flow }) => {
 		mySecondInProp: "Some text"
 	});
 	// presenting another MyView instance on top of the first one
-	const myView = view(1, views.MyView, {
+	const myView2 = view(1, views.MyView, {
 		myInProp: "Hello Prop 2!",
 		mySecondInProp: "Some other text"
 	});
