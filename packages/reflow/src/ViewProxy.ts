@@ -67,6 +67,33 @@ export class ViewProxy<ViewsMap extends ViewsMapInterface, T extends ViewsMap[ke
 		this.eventListeners[eventName].push(listener);
 		return this;
 	}
+  off<U extends ViewInterfaceEvents<ViewsMap, T>>(eventName: U, listener?: ViewInterfaceEventCallback<ViewsMap, T, U>): ViewProxy<ViewsMap, T> {
+    if(this.eventListeners[eventName]) {
+      if(listener === undefined) {
+        this.eventListeners[eventName] = undefined;
+      } else {
+        const index = this.eventListeners[eventName].findIndex((l) => l === listener);
+        this.eventListeners[eventName].splice(index, 1);
+      }
+    } 
+    return this;
+  }
+  /**
+   * If a listener is passed the listener will invoke with the event data
+   * The promise will resolve with the event data
+   */
+  async once<U extends ViewInterfaceEvents<ViewsMap, T>>(eventName: U, listener?: ViewInterfaceEventCallback<ViewsMap, T, U>): Promise<ViewInterfaceEventData<ViewsMap, T, U>> {
+    return new Promise((res) => {
+      const _listener = (data: ViewInterfaceEventCallback<ViewsMap, T, U>) => {
+        if(listener) {
+          listener(data);
+          this.off(eventName, _listener);
+        }
+        res(data)
+      }
+      this.on(eventName, _listener);
+    })
+  }
 	update(params: PartialViewInterfaceInput<ViewsMap, T>) {
 		if (this.removed) {
 			return;
