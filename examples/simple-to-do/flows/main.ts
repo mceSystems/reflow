@@ -1,7 +1,7 @@
 import { Flow } from "@mcesystems/reflow";
-
 import { ViewInterfacesType } from "../viewInterfaces";
 import { Todo } from "../viewInterfaces/TodoList";
+
 
 export default <Flow<ViewInterfacesType>>(async ({ view, views }) => {
 	const todos: Todo[] = [];
@@ -54,6 +54,12 @@ export default <Flow<ViewInterfacesType>>(async ({ view, views }) => {
 			toggledTodo.done = done;
 			todoView.update({ todos });
 		});
+
+    function onEdit() { /* do nothing */ }
+
+    todoView.on("todoEdit", onEdit);
+    const firstTodo =  await todoView.once("newTodo");
+    todoView.off("todoEdit", onEdit);
 
 	// awaiting a never-ending promise to hang the flow
 	await new Promise(() => { });
