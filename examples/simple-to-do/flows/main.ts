@@ -55,11 +55,11 @@ export default <Flow<ViewInterfacesType>>(async ({ view, views }) => {
 			todoView.update({ todos });
 		});
 
-    function onEdit() { /* do nothing */ }
+	function onEdit() { /* do nothing */ }
 
-    todoView.on("todoEdit", onEdit);
-    const firstTodo =  await todoView.once("newTodo");
-    todoView.off("todoEdit", onEdit);
+	todoView.on("todoEdit", onEdit);
+	const firstTodo = await todoView.once("newTodo");
+	todoView.off("todoEdit", onEdit);
 
 	// awaiting a never-ending promise to hang the flow
 	await new Promise(() => { });
