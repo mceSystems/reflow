@@ -1,6 +1,6 @@
 {
 	"name": "@mcesystems/reflow-react-display-layer",
-	"version": "4.3.10",
+	"version": "4.3.11",
 	"description": "React display layer for @mcesystems/reflow",
 	"main": "dist/index",
 	"typings": "dist/index",
@@ -15,7 +15,7 @@
 	"author": "mceSystems",
 	"license": "MIT",
 	"dependencies": {
-		"@mcesystems/reflow": "^4.3.10",
+		"@mcesystems/reflow": "^4.3.11",
 		"react": "^16.4.0",
 		"react-dom": "^16.8.6"
 	},
