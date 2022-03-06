@@ -78,10 +78,10 @@ export class ViewProxy<ViewsMap extends ViewsMapInterface, T extends ViewsMap[ke
 		} 
 		return this;
 	}
-  /**
-   * If a listener is passed the listener will invoke with the event data
-   * The promise will resolve with the event data
-   */
+	/**
+	 * If a listener is passed the listener will invoke with the event data
+	 * The promise will resolve with the event data
+	 */
 	async once<U extends ViewInterfaceEvents<ViewsMap, T>>(eventName: U, listener?: ViewInterfaceEventCallback<ViewsMap, T, U>): Promise<ViewInterfaceEventData<ViewsMap, T, U>> {
 		return new Promise((res) => {
 			const _listener = (data: ViewInterfaceEventCallback<ViewsMap, T, U>) => {
