@@ -1,7 +1,7 @@
 {
 	"name": "@mcesystems/reflow-example-stateful-flows",
 	"private": true,
-	"version": "4.3.12",
+	"version": "4.3.11",
 	"description": "A ui-less flow that shows how flows can retain state between invocations",
 	"main": "dist/index",
 	"scripts": {
@@ -9,7 +9,7 @@
 	},
 	"author": "mceSystems",
 	"dependencies": {
-		"@mcesystems/reflow": "^4.3.12"
+		"@mcesystems/reflow": "^4.3.11"
 	},
 	"devDependencies": {
 		"typescript": "^3.5.3"
