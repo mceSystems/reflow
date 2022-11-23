@@ -15,7 +15,7 @@
 	"author": "mceSystems",
 	"license": "MIT",
 	"dependencies": {
-		"socket.io": "2.4.1",
+		"socket.io": "2.5.0",
 		"uuid": "^3.2.1"
 	},
 	"devDependencies": {
