@@ -9,7 +9,7 @@ class ContactsList extends ReflowReactComponent<ContactsListInterface> {
 			<div
 				style={{
 					width: 512,
-					height: "100%",
+					height: "50%",
 					borderRadius: 5,
 					margin: "auto"
 				}}

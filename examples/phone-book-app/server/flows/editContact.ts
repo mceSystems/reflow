@@ -4,7 +4,7 @@ import { ViewInterfacesType } from "../../viewInterfaces";
 import Contact from "../../viewInterfaces/shared/Contact";
 
 export type FlowInput = {
-	contact: Contact
+	contact?: Contact
 };
 export default <Flow<ViewInterfacesType, FlowInput, Contact>>(async ({ view, views, input: { contact = { name: "", phoneNumber: "" } } }) => {
 	const nameOutput = await view(0, views.EditContactField, {
