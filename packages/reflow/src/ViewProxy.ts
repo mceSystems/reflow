@@ -23,7 +23,7 @@ export class ViewProxy<ViewsMap extends ViewsMapInterface, T extends ViewsMap[ke
 	private onUpdate: ViewOnUpdateCallback<ViewsMap, T> = (input) => { };
 	private onRemove: ViewOnRemoveCallback = () => { };
 
-	constructor(executor: (resolve: () => void, reject: () => void) => ViewProxy<ViewsMap, T> | null, onUpdate: ViewOnUpdateCallback<ViewsMap, T>, onRemove: ViewOnRemoveCallback) {
+	constructor(executor: (resolve: (value: T["output"] | PromiseLike<T["output"]>) => void, reject: () => void) => ViewProxy<ViewsMap, T> | null, onUpdate: ViewOnUpdateCallback<ViewsMap, T>, onRemove: ViewOnRemoveCallback) {
 		super(executor ? executor : (resolve) => {
 			setTimeout(() => {
 				this.resolve = resolve;

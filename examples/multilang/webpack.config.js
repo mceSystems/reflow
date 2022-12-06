@@ -10,14 +10,21 @@ module.exports = {
 	resolve: {
 		extensions: [".ts", ".tsx", ".js", ".json"],
 	},
-	externals: ["socket.io"],
+	externals: ["socket.io", "http"],
 	optimization: {
 		minimize: false,
 	},
+	devServer: {
+		static: {
+			directory: __dirname
+		},
+		client: {
+			overlay: false
+		}
+	},
 	module: {
 		rules: [
-			{ test: /\.tsx?$/, loader: "awesome-typescript-loader" },
-			{ enforce: "pre", test: /\.js$/, loader: "source-map-loader" }
+			{ test: /\.tsx?$/, loader: "ts-loader" },
 		],
 	},
 };

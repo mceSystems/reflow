@@ -2,12 +2,16 @@ import { ReflowTransport } from "../ReflowTransport";
 import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
 
-import ServerSocket from "socket.io";
-import ClientSocket from "socket.io-client";
+import { Server as ServerSocket } from "socket.io";
+import { Socket as ClientSocket } from "socket.io-client";
+import { CorsOptions } from "cors";
+
+export { CorsOptions } from "cors";
 
 interface WebSocketConnectionOptions {
 	host?: string;
 	port?: number;
+	cors?: CorsOptions;
 }
 
 export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTransport<ViewerParameters> {
@@ -20,15 +24,21 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 		this.__socket = null;
 	}
 	initializeAsEngine() {
-		const { port = 3000 } = this.__connectionOptions || {};
+		const { port = 3000, host = "127.0.0.1", cors } = this.__connectionOptions || {};
 
-		const server = require("http").createServer();
-		const io = require("socket.io")(server);
-		server.listen(port);
+		const httpServer = require("http").createServer();
+		const { Server } = require("socket.io") as { Server: typeof ServerSocket };
+		const io = new Server(httpServer, {
+			cors,
+		});
+		httpServer.listen({
+			port,
+			host,
+		});
 		this.__socket = io;
 		this.__socket.on("connection", (socket) => {
 			socket
-				.on("view_event", <T extends ViewInterface, U extends keyof T["events"]>({ uid, eventName, eventData }: {uid: string; eventName: U; eventData: T["events"][U]}) => {
+				.on("view_event", <T extends ViewInterface, U extends keyof T["events"]>({ uid, eventName, eventData }: { uid: string; eventName: U; eventData: T["events"][U] }) => {
 					for (const listener of this.viewEventListeners) {
 						listener(uid, eventName, eventData);
 					}
@@ -48,8 +58,8 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 		return Promise.resolve();
 	}
 	initializeAsDisplay() {
-		const io = require("socket.io-client");
-		const { host = "localhost", port = 3000 } = this.__connectionOptions || {};
+		const { io } = require("socket.io-client");
+		const { host = "127.0.0.1", port = 3000 } = this.__connectionOptions || {};
 
 		const socket = io(`http://${host}:${port}`);
 
