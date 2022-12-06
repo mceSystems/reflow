@@ -1,7 +1,14 @@
 {
-  "packages": [
-    "examples/*",
-    "packages/*"
-  ],
-  "version": "4.3.12"
+	"command": {
+		"bootstrap": {
+			"rejectCycles": true,
+			"forceLocal": true,
+			"strict": true
+		}
+	},
+	"packages": [
+		"examples/*",
+		"packages/*"
+	],
+	"version": "4.3.12"
 }
