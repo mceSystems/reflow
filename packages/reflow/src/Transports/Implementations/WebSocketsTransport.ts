@@ -23,7 +23,7 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 		this.__connectionOptions = connectionOptions;
 		this.__socket = null;
 	}
-	initializeAsEngine() {
+	internalInitializeAsEngine() {
 		const { port = 3000, host = "127.0.0.1", cors } = this.__connectionOptions || {};
 
 		const httpServer = require("http").createServer();
@@ -57,7 +57,7 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 
 		return Promise.resolve();
 	}
-	initializeAsDisplay() {
+	internalInitializeAsDisplay() {
 		const { io } = require("socket.io-client");
 		const { host = "127.0.0.1", port = 3000 } = this.__connectionOptions || {};
 
