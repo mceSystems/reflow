@@ -12,6 +12,10 @@ export default <Flow<ViewInterfacesType>>(async ({ view, views }) => {
 		]
 	});
 
+	view(0, views.Disclaimer, {
+		content: "This is the disclaimer text you should worry about",
+	}, userApproval);
+
 	userApproval.on("itemChanged", ({ checked, item }) => {
 		console.log("[Hosted Flow]", `Got item changed event item=${item} checked=${checked}`);
 	});

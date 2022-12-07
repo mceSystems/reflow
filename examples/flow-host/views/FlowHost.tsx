@@ -1,8 +1,8 @@
-import PresentationContainerInterface from "../viewInterfaces/FlowHost";
+import FlowHostInterface from "../viewInterfaces/FlowHost";
 import { ReflowReactComponent } from "@mcesystems/reflow-react-display-layer";
 import * as React from "react";
 
-class FlowHost extends ReflowReactComponent<PresentationContainerInterface> {
+class FlowHost extends ReflowReactComponent<FlowHostInterface> {
 	render() {
 		const { title, children } = this.props;
 		return (

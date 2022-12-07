@@ -4,13 +4,9 @@ import * as React from "react";
 
 class UserApproval extends ReflowReactComponent<UserApprovalInterface> {
 	render() {
-		const { title, itemsToApprove, done, event } = this.props;
+		const { title, itemsToApprove, done, event, children } = this.props;
 		return (
-			<div
-				style={{
-
-				}}
-			>
+			<div style={{}}>
 				<h1>{title}</h1>
 				{
 					itemsToApprove.map(item => (
@@ -20,6 +16,9 @@ class UserApproval extends ReflowReactComponent<UserApprovalInterface> {
 						</div>
 					))
 				}
+				<div style={{ padding: 8, margin: 8, border: "1px solid black" }}>
+					{children}
+				</div>
 				<button style={{ float: "right" }} onClick={() => done(true)}>Agree</button>
 			</div>
 		);
