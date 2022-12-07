@@ -49,7 +49,7 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	 * If no viewParent is given, embeds in the flows' view parent
 	 * 
 	 */
-	pipeDisplayLayer: (transport: ReflowTransport<ViewerParameters>, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null) => { remove: () => void };
+	pipeDisplayLayer: (transport: ReflowTransport<ViewerParameters>, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null) => Promise<{ remove: () => void }>;
 	/**
 	 * Translatable string
 	 */
@@ -404,11 +404,11 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		return flowProxy;
 	}
 
-	private pipeDisplayLayer(
+	private async pipeDisplayLayer(
 		hiddenViewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>,
 		transport: ReflowTransport,
 		viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null
-	): { remove: () => void } {
+	): Promise<{ remove: () => void }> {
 		const realViewParent = viewParent || hiddenViewParent;
 		const viewParentUid = this.getViewUid(realViewParent);
 		if (realViewParent && (!viewParentUid || !this.viewMap[viewParentUid])) {
@@ -432,9 +432,13 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			}
 		};
 
-		transport.initializeAsDisplay();
+		await transport.initializeAsDisplay();
 		transport.onViewTree((tree) => {
 			if (!workingStack[flowViewStackIndex]) {
+				return;
+			}
+			if (workingStack[flowViewStackIndex].done) {
+				// done flow stack - block viewing new views
 				return;
 			}
 			const inflated = this.inflateViewTree(tree);
