@@ -30,8 +30,8 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 		Notifications extends object,
 		Events extends object,
 		ExternalEvants extends object,
-		// tslint:disable-next-line: max-line-length
-		>(flow: Flow<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>, input?: Input, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null, options?: FlowOptions) => FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>;
+	// tslint:disable-next-line: max-line-length
+	>(flow: Flow<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>, input?: Input, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null, options?: FlowOptions) => FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>;
 	/**
 	 * Start new view
 	 */
@@ -44,6 +44,12 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	 * Update viewer parameters
 	 */
 	viewerParameters: (params: ViewerParameters) => void;
+	/**
+	 * Embed the view tree from the given transport in the given viewParent
+	 * If no viewParent is given, embeds in the flows' view parent
+	 * 
+	 */
+	pipeDisplayLayer: (transport: ReflowTransport<ViewerParameters>, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null) => { remove: () => void };
 	/**
 	 * Translatable string
 	 */
@@ -210,6 +216,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		return {
 			flow: this.flow.bind(this, viewParent),
 			view: this.view.bind(this, flowViewStackIndex, viewParentUid),
+			pipeDisplayLayer: this.pipeDisplayLayer.bind(this, viewParent),
 			views: this.views,
 			viewerParameters: this.updateViewerParameters.bind(this),
 			tx: (str: string, templateDictionary?: { [token: string]: any }) => {
@@ -236,11 +243,11 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 				}
 			},
 			externalEvent: (eventName: string | number | symbol, data: any) => {
-				this.dispatchEvent(this.externalEventListeners, eventName, data );
+				this.dispatchEvent(this.externalEventListeners, eventName, data);
 			},
 		};
 	}
-	private cleanViewTree(viewTree: Array<ViewTree<ViewsMap>>): ReducedViewTree<ViewsMap> {
+	private deflateViewTree(viewTree: Array<ViewTree<ViewsMap>>): ReducedViewTree<ViewsMap> {
 		return (
 			(JSON.parse(JSON.stringify(viewTree)) as typeof viewTree) // translate translateable strings
 				.filter(n => n) // remove delete views
@@ -252,16 +259,33 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 				.reduce((a, b) => a.concat(b), [])
 				// recurse through children
 				.map((item) => {
-					return Object.assign({}, item, { children: this.cleanViewTree(item.children), viewProxy: undefined });
+					return Object.assign({}, item, { children: this.deflateViewTree(item.children), viewProxy: undefined });
 				})
 		);
 	}
+
+	private inflateViewTree(viewTree: ReducedViewTree<ViewsMapInterface>): Array<ViewTree<ViewsMap>> {
+		return (
+			viewTree
+				.map(n => ({
+					done: false,
+					strings: {},
+					views: [
+						Object.assign({}, n, {
+							children: this.inflateViewTree(n.children),
+							viewProxy: new ViewProxy(null, () => { }, () => { }), // virtual ViewProxy - used to listen to done and event calls
+						})
+					],
+				}))
+		);
+	}
+
 	private updateViewerParameters(viewerParameters: ViewerParameters) {
 		this.viewerParameters = viewerParameters;
 		this.transport.sendViewerParameters(viewerParameters);
 	}
 	private update() {
-		const reducedStack = this.cleanViewTree(this.viewStack);
+		const reducedStack = this.deflateViewTree(this.viewStack);
 		this.transport.sendViewTree(reducedStack);
 	}
 	private view<T extends ViewsMap[keyof ViewsMap]>(flowViewStackIndex: number, viewParentUid: string | null, layer: number, type: T, input?: T["input"], viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>): ViewProxy<ViewsMap, T> {
@@ -380,6 +404,64 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		return flowProxy;
 	}
 
+	private pipeDisplayLayer(
+		hiddenViewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>,
+		transport: ReflowTransport,
+		viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null
+	): { remove: () => void } {
+		const realViewParent = viewParent || hiddenViewParent;
+		const viewParentUid = this.getViewUid(realViewParent);
+		if (realViewParent && (!viewParentUid || !this.viewMap[viewParentUid])) {
+			throw new Error(`Provided viewParent is invalid (was it removed?)`);
+		}
+		const workingStack = this.getViewStack(viewParentUid);
+		const flowViewStackIndex = workingStack.length;
+		if (!workingStack[flowViewStackIndex]) {
+			workingStack[flowViewStackIndex] = {
+				strings: {},
+				views: [],
+				done: false,
+			};
+		}
+
+		const remove = () => {
+			if (workingStack[flowViewStackIndex]) {
+				workingStack[flowViewStackIndex].done = true;
+				workingStack[flowViewStackIndex].views.splice(0);
+				this.update();
+			}
+		};
+
+		transport.initializeAsDisplay();
+		transport.onViewTree((tree) => {
+			if (!workingStack[flowViewStackIndex]) {
+				return;
+			}
+			const inflated = this.inflateViewTree(tree);
+			workingStack[flowViewStackIndex].views = inflated.reduce((a, b) => a.concat(b.views), []);
+			// listen to virtual viewProxy events and done
+			const viewsToIterate = [...workingStack[flowViewStackIndex].views];
+			for (let i = 0; i < viewsToIterate.length; i++) {
+				const viewItem = viewsToIterate[i];
+				this.viewMap[viewItem.uid] = viewItem;
+				viewItem.viewProxy?.addGlobalEventListener((name, data) => {
+					transport.sendViewEvent(viewItem.uid, name, data);
+				}).then((output) => {
+					transport.sendViewDone(viewItem.uid, output);
+				});
+				if (viewItem.children) {
+					viewsToIterate.push(...viewItem.children.reduce((a, b) => a.concat(b.views), []));
+				}
+			}
+			this.update();
+		});
+		transport.sendViewSync();
+
+		return {
+			remove
+		}
+	}
+
 	private registerEventListener<T extends object, U extends keyof T>(listenersMap: object, eventName: string | number | symbol, listener?: ExternalEventListener): Promise<T[U]> {
 		if (!listenersMap[eventName]) {
 			listenersMap[eventName] = [];
@@ -440,7 +522,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		}
 		this.mainFlowProxy.cancel();
 	}
-	addEventListener(name: string | number | symbol, listener?: ExternalEventListener ): Promise<any> {
+	addEventListener(name: string | number | symbol, listener?: ExternalEventListener): Promise<any> {
 		return this.registerEventListener(this.externalEventListeners, name, listener);
 	}
 	removeEventListener(name: string | number | symbol, listener?: ExternalEventListener) {

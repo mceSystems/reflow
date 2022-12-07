@@ -1,0 +1,23 @@
+{
+	"name": "@mcesystems/reflow-example-flow-host",
+	"private": true,
+	"version": "4.3.12",
+	"description": "A flow container hab to show how to display views from a flow in a different reflow instance",
+	"main": "dist/index",
+	"scripts": {
+		"start": "webpack serve --mode production"
+	},
+	"author": "mceSystems",
+	"dependencies": {
+		"@mcesystems/reflow": "^4.3.12",
+		"@mcesystems/reflow-react-display-layer": "^4.3.12"
+	},
+	"devDependencies": {
+		"ts-loader": "^9.4.2",
+		"react": "^16.8.6",
+		"typescript": "^4.9.3",
+		"webpack": "^5.75.0",
+		"webpack-dev-server": "^4.1.1",
+		"webpack-cli": "^5.0.1"
+	}
+}

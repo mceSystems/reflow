@@ -13,6 +13,8 @@ export abstract class ReflowTransport<ViewerParameters = {}> {
 	protected viewStackUpdateListeners: Array<TransportViewStackUpdateListener> = [];
 	protected viewerParametersListeners: Array<TransportViewerParametersListener<ViewerParameters>> = [];
 	protected viewSyncListeners: Array<TransportSyncViewListener> = [];
+	private initializeAsEnginePromise: Promise<void> | null = null;
+	private initializeAsDisplayPromise: Promise<ReflowTransport<ViewerParameters>> | null = null;
 
 	constructor(connectionParams: object) { }
 	/**
@@ -22,7 +24,13 @@ export abstract class ReflowTransport<ViewerParameters = {}> {
 	 * @returns {Promise<void>}
 	 * @memberof ReflowTransport
 	 */
-	abstract initializeAsEngine(): Promise<void>;
+	initializeAsEngine(): Promise<void> {
+		if (!this.initializeAsEnginePromise) {
+			this.initializeAsEnginePromise = this.internalInitializeAsEngine();
+		}
+		return this.initializeAsEnginePromise;
+	};
+	abstract internalInitializeAsEngine(): Promise<void>;
 	/**
 	 * Send a view tree update to the display client
 	 *
@@ -71,7 +79,14 @@ export abstract class ReflowTransport<ViewerParameters = {}> {
 	 * @returns {Promise<void>}
 	 * @memberof ReflowTransport
 	 */
-	abstract initializeAsDisplay(): Promise<ReflowTransport<ViewerParameters>>;
+	initializeAsDisplay(): Promise<ReflowTransport<ViewerParameters>> {
+		if (!this.initializeAsDisplayPromise) {
+			this.initializeAsDisplayPromise = this.internalInitializeAsDisplay();
+		}
+		return this.initializeAsDisplayPromise;
+
+	};
+	abstract internalInitializeAsDisplay(): Promise<ReflowTransport<ViewerParameters>>;
 	/**
 	 * Registers a listener for view-tree updates coming from the engine
 	 *

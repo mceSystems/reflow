@@ -1,5 +1,5 @@
 # presentation
-This is an interactive presentation that demonstrates the relationship between a view and its children, and how the flow controls it.
+This is an demonstration of `pipeDisplayLayer` - a feature that hosts the views of a separate Reflow instance as children of a view 
 
 ## Running
 `npm install` \

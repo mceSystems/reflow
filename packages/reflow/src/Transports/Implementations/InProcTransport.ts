@@ -4,10 +4,10 @@ import { ViewInterface, ViewsMapInterface } from "../../View";
 
 
 export default class InProcTransport<ViewerParameters = {}> extends ReflowTransport<ViewerParameters> {
-	initializeAsEngine() {
+	internalInitializeAsEngine() {
 		return Promise.resolve();
 	}
-	initializeAsDisplay() {
+	internalInitializeAsDisplay() {
 		return new Promise<InProcTransport<ViewerParameters>>((resolve) => {
 			this.sendViewSync();
 			resolve(this);
