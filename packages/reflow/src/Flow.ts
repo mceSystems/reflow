@@ -32,6 +32,7 @@ export type FlowRoute = FlowRoutingEntry[];
 
 export type FlowEventsDescriptor = object;
 export type FlowEventListener<Events extends FlowEventsDescriptor, T extends keyof Events> = (data: Events[T]) => void;
+export type GlobalFlowEventListener<Events extends FlowEventsDescriptor, T extends keyof Events> = (name: T, data: Events[T]) => void;
 export type FlowEventsEmitter<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, data: Events[T]) => void;
 export type FlowEventRegisterer<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => Promise<Events[T]>;
 export type FlowEventRemover<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => void;
@@ -40,7 +41,7 @@ export type FlowStepRegisterer = <T>(handler: () => Promise<T>, name?: string) =
 export type FlowBackPointRegisterer = (id?: string) => void;
 export type FlowBack = (id?: string) => void;
 
-export type Flow<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}, ExternalEvents extends FlowEventsDescriptor={}> =
+export type Flow<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}, ExternalEvents extends FlowEventsDescriptor = {}> =
 	(toolkit: Omit<FlowToolkit<ViewsMap>, "externalEvent"> & {
 		input: Input,
 		state: State,
@@ -65,11 +66,12 @@ export interface FlowOptions {
 
 let tmpResolve = null;
 let tmpReject = null;
-export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}, ExternalEvents extends FlowEventsDescriptor={}> extends Promise<Output> {
+export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = void, Output extends any = void, State extends object = {}, Notifications extends FlowEventsDescriptor = {}, Events extends FlowEventsDescriptor = {}, ExternalEvents extends FlowEventsDescriptor = {}> extends Promise<Output> {
 	private resolve: (output: Output) => void = () => { };
 	private reject: (err?) => void = () => { };
 	private notificationListeners: { [T in keyof Notifications]?: Array<FlowEventListener<Notifications, T>> } = {};
 	private eventListeners: { [T in keyof Events]?: Array<FlowEventListener<Events, T>> } = {};
+	private globalEventListeners: Array<GlobalFlowEventListener<Events, keyof Events>> = [];
 	private cancellationPromise: Promise<CancellationError>;
 	private cancellationPromiseEmitters: Array<() => void> = [];
 	private doCancelFlow: () => void;
@@ -344,12 +346,28 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 	}
 	event<T extends keyof Events>(eventName: T, data: Events[T]) {
 		this.dispatchEvent(this.eventListeners, eventName, data);
+		for (const listener of this.globalEventListeners) {
+			listener(eventName, data);
+		}
 	}
 	on<T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>): Promise<Events[T]> {
 		return this.registerEventListener<Events, T>(this.eventListeners, eventName, listener);
 	}
 	off<T extends keyof Events>(eventName: T, listener: FlowEventListener<Events, T>) {
 		this.removeEventListener(this.eventListeners, eventName, listener);
+	}
+	addGlobalEventListener(listener: GlobalFlowEventListener<Events, keyof Events>): void {
+		this.globalEventListeners.push(listener);
+	}
+	removeGlobalEventListener(listener?: GlobalFlowEventListener<Events, keyof Events>): void {
+		if (!listener) {
+			this.globalEventListeners.splice(0);
+		} else {
+			const index = this.globalEventListeners.indexOf(listener);
+			if (-1 !== index) {
+				this.globalEventListeners.splice(index, 1);
+			}
+		}
 	}
 	cancel() {
 		this.doCancelFlow();
@@ -398,7 +416,7 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 			return;
 		}
 		// in case the flow route is running - resolve the route promise in a continuing mode
-			this.flowRouteContinuePromiseResolver(false);
+		this.flowRouteContinuePromiseResolver(false);
 		this.flowRouteCurrentEntryIndex = backEntryIndex;
 		this.startFlowRoute();
 	}
