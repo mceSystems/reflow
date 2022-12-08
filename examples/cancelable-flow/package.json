@@ -1,7 +1,7 @@
 {
 	"name": "@mcesystems/reflow-example-cancelable-flow",
 	"private": true,
-	"version": "5.0.1",
+	"version": "5.0.2",
 	"description": "A ui-less flow that shows how flows can be canceled in mid-operation",
 	"main": "dist/index",
 	"scripts": {
@@ -9,7 +9,7 @@
 	},
 	"author": "mceSystems",
 	"dependencies": {
-		"@mcesystems/reflow": "^5.0.1"
+		"@mcesystems/reflow": "^5.0.2"
 	},
 	"devDependencies": {
 		"typescript": "^4.9.3"
