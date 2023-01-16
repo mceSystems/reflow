@@ -216,7 +216,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		return {
 			flow: this.flow.bind(this, viewParent),
 			view: this.view.bind(this, flowViewStackIndex, viewParentUid),
-			pipeDisplayLayer: this.pipeDisplayLayer.bind(this, viewParent),
+			pipeDisplayLayer: this.pipeDisplayLayer.bind(this, flowViewStackIndex, viewParent),
 			views: this.views,
 			viewerParameters: this.updateViewerParameters.bind(this),
 			tx: (str: string, templateDictionary?: { [token: string]: any }) => {
@@ -405,6 +405,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	}
 
 	private async pipeDisplayLayer(
+		flowViewStackIndex: number,
 		hiddenViewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>,
 		transport: ReflowTransport,
 		viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null
@@ -415,7 +416,6 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			throw new Error(`Provided viewParent is invalid (was it removed?)`);
 		}
 		const workingStack = this.getViewStack(viewParentUid);
-		const flowViewStackIndex = workingStack.length;
 		if (!workingStack[flowViewStackIndex]) {
 			workingStack[flowViewStackIndex] = {
 				strings: {},
