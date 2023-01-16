@@ -1,7 +1,7 @@
 {
 	"name": "@mcesystems/reflow-example-multilang",
 	"private": true,
-	"version": "5.0.2",
+	"version": "5.0.3",
 	"description": "A simple text viewer app that shows translations support in Reflow",
 	"main": "dist/index",
 	"scripts": {
@@ -9,8 +9,8 @@
 	},
 	"author": "mceSystems",
 	"dependencies": {
-		"@mcesystems/reflow": "^5.0.2",
-		"@mcesystems/reflow-react-display-layer": "^5.0.2"
+		"@mcesystems/reflow": "^5.0.3",
+		"@mcesystems/reflow-react-display-layer": "^5.0.3"
 	},
 	"devDependencies": {
 		"react": "^16.8.6",
