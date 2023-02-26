@@ -29,9 +29,9 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 		State extends object,
 		Notifications extends object,
 		Events extends object,
-		ExternalEvants extends object,
+		ExternalEvents extends object,
 	// tslint:disable-next-line: max-line-length
-	>(flow: Flow<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>, input?: Input, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null, options?: FlowOptions) => FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>;
+	>(flow: Flow<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvents> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvents>, input?: Input, viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> | null, options?: FlowOptions) => FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvents>;
 	/**
 	 * Start new view
 	 */
@@ -353,10 +353,10 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		State extends object,
 		Notifications extends object,
 		Events extends object,
-		ExternalEvants extends object,
+		ExternalEvents extends object,
 	>(
 		hiddenViewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>,
-		flow: Flow<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvants>,
+		flow: Flow<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvents> | FlowProxy<ViewsMap, Input, Output, State, Notifications, Events, ExternalEvents>,
 		input?: Input,
 		viewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]> = null,
 		options: FlowOptions = { autoStart: true },
