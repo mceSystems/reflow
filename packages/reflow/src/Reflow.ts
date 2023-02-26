@@ -75,7 +75,7 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 type ExternalEventListener = (data: any) => void
 
 export interface ReflowOptions<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
-	transport: ReflowTransport<ViewerParameters>;
+	transport: ReflowTransport<ViewerParameters> | ReflowTransport<ViewerParameters>[];
 	views: ViewsMap;
 	viewerParameters?: ViewerParameters;
 }
@@ -125,7 +125,7 @@ const createTranslateableString = (original: string, value: string, templateDict
 export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	private mainFlowProxy: FlowProxy<ViewsMap, any, any, any, any, any, any>;
 	private started: boolean = false;
-	private transport: ReflowTransport<ViewerParameters>;
+	private transport: ReflowTransport<ViewerParameters>[];
 	private views: ViewsMap;
 	private viewStack: Array<ViewTree<ViewsMap>> = [];
 	// used for quick uid-to-viewProxy access
@@ -138,27 +138,32 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	private externalEventListeners: { [key: string]: Array<ExternalEventListener> } = {};
 
 	constructor({ transport, views, viewerParameters }: ReflowOptions<ViewsMap, ViewerParameters>) {
-		this.transport = transport;
+		this.transport = Array.isArray(transport) ? transport : [transport];
 		this.views = views;
 		this.viewMap = {};
 		this.currentLanguage = "";
 		this.currentFallbackLanguages = [];
-		this.transport.onViewDone((uid, output) => {
+		this.viewerParameters = viewerParameters;
+		this.transport.forEach((tp) => {
+			this.setupTransportListeners(tp);
+		})
+	}
+	private setupTransportListeners(transport: ReflowTransport<ViewerParameters>) {
+		transport.onViewDone((uid, output) => {
 			if (!this.viewMap[uid]) {
 				return;
 			}
 			this.viewMap[uid].viewProxy.done(output);
 		});
-		this.transport.onViewEvent((uid, eventName, eventData) => {
+		transport.onViewEvent((uid, eventName, eventData) => {
 			if (!this.viewMap[uid]) {
 				return;
 			}
 			this.viewMap[uid].viewProxy.event(eventName, eventData);
 		});
-		this.viewerParameters = viewerParameters;
-		this.transport.onSyncView(() => {
+		transport.onSyncView(() => {
 			this.updateViewerParameters(this.viewerParameters);
-			this.update();
+			this.update(transport);
 		});
 	}
 	private translateableStringToJsonHandler(strings: Strings, original: string, history: TranslationCompareHistory, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
@@ -282,11 +287,15 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 
 	private updateViewerParameters(viewerParameters: ViewerParameters) {
 		this.viewerParameters = viewerParameters;
-		this.transport.sendViewerParameters(viewerParameters);
+		this.transport.forEach((tp) => tp.sendViewerParameters(viewerParameters));
 	}
-	private update() {
+	private update(transport?: ReflowTransport<ViewerParameters>) {
 		const reducedStack = this.deflateViewTree(this.viewStack);
-		this.transport.sendViewTree(reducedStack);
+		if (transport) {
+			transport.sendViewTree(reducedStack);
+			return;
+		}
+		this.transport.forEach((tp) => tp.sendViewTree(reducedStack));
 	}
 	private view<T extends ViewsMap[keyof ViewsMap]>(flowViewStackIndex: number, viewParentUid: string | null, layer: number, type: T, input?: T["input"], viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>): ViewProxy<ViewsMap, T> {
 		if (viewParent) {
@@ -516,7 +525,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			return Promise.reject("Cannot start more than once per instance");
 		}
 		this.started = true;
-		await this.transport.initializeAsEngine();
+		await this.transport.forEach((tp) => tp.initializeAsEngine());
 		this.mainFlowProxy = <FlowProxy<ViewsMap, Input, Output>>this.flow(null, flow, input);
 		return await this.mainFlowProxy;
 	}
@@ -531,5 +540,19 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	}
 	removeEventListener(name: string | number | symbol, listener?: ExternalEventListener) {
 		this.deleteEventListener(this.externalEventListeners, name, listener);
+	}
+	async addTransport(transport: ReflowTransport<ViewerParameters>) {
+		this.setupTransportListeners(transport);
+		this.transport.push(transport);
+		if (this.started) {
+			await transport.initializeAsEngine();
+		}
+		this.update(transport);
+	}
+	removeTransport(transport: ReflowTransport<ViewerParameters>) {
+		const idx = this.transport.indexOf(transport);
+		if (-1 !== idx) {
+			this.transport.splice(idx, 1);
+		}
 	}
 }
