@@ -1,7 +1,7 @@
 {
 	"name": "@mcesystems/reflow-example-routing-flow",
 	"private": true,
-	"version": "5.0.3",
+	"version": "5.0.4",
 	"description": "A ui-less flow that shows how flows can use event to communication between child/parent flows",
 	"main": "dist/index",
 	"scripts": {
@@ -9,7 +9,7 @@
 	},
 	"author": "mceSystems",
 	"dependencies": {
-		"@mcesystems/reflow": "^5.0.3"
+		"@mcesystems/reflow": "^5.0.4"
 	},
 	"devDependencies": {
 		"typescript": "^4.9.3"
