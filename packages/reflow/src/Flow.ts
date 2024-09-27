@@ -37,7 +37,7 @@ export type FlowEventsEmitter<Events extends FlowEventsDescriptor> = <T extends 
 export type FlowEventRegisterer<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => Promise<Events[T]>;
 export type FlowEventRemover<Events extends FlowEventsDescriptor> = <T extends keyof Events>(eventName: T, listener?: FlowEventListener<Events, T>) => void;
 export type FlowAction = <T>(action: Promise<T>) => ActionPromise<T>;
-export type FlowStepRegisterer = <T>(handler: () => Promise<T>, name?: string) => T;
+export type FlowStepRegisterer = <T>(handler: () => Promise<T>, name?: string) => Promise<T>;
 export type FlowBackPointRegisterer = (id?: string) => void;
 export type FlowBack = (id?: string) => void;
 
