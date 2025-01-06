@@ -154,7 +154,7 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 			action: this.action,
 			cancel: this.cancel,
 			onCanceled: this.onCanceled,
-			step: this.step as FlowStepRegisterer,
+			step: this.step,
 			backPoint: this.backPoint,
 			backOutput: this.setBackOutput,
 			back: this.back,
@@ -306,8 +306,8 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 		}
 		this.flowRouteRunning = false;
 	}
-	private step<T>(handler: () => Promise<T>, name?: string) {
-		return new Promise((resolve) => {
+	private step<T>(handler: () => Promise<T>, name?: string): Promise<T> {
+		return new Promise<T>((resolve) => {
 			this.flowRoute.push(<FlowRoutingStep<T>>{
 				type: FlowRoutingEntryType.Step,
 				handler,

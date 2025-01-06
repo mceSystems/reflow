@@ -1,6 +1,6 @@
 import { FlowProxy, Flow, CancellationError, FlowOptions } from "./Flow";
 import { ViewProxy } from "./ViewProxy";
-import { ViewsMapInterface, ViewInterface } from "./View";
+import { ViewsMapInterface } from "./View";
 import { v4 } from "uuid";
 import { ReflowTransport } from "./Transports";
 
@@ -9,9 +9,9 @@ export interface Strings {
 		[key: string]: string;
 	};
 }
-export class TranslateableString extends String {
+export class TranslatableString extends String {
 	public __reflowOriginalString: string = "";
-	public __reflowTranslateable: boolean = true;
+	public __reflowTranslatable: boolean = true;
 	public __reflowTemplateDictionary: { [token: string]: any } = {};
 	public toJSON: (original: string) => string;
 	constructor(...args) {
@@ -53,7 +53,7 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	/**
 	 * Translatable string
 	 */
-	tx: (str: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) => string;
+	tx: (str: string, templateDictionary?: TranslatableString["__reflowTemplateDictionary"]) => string;
 	/**
 	 * Update strings dictionary
 	 */
@@ -107,18 +107,18 @@ export interface TranslationCompareHistory {
 	lastTranslated: string;
 };
 
-const createTranslateableString = (original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"], toJsonHandler?: TranslateableString["toJSON"]) => {
-	const translateable = new String(value) as TranslateableString;
-	translateable.__reflowOriginalString = original;
-	translateable.__reflowTranslateable = true;
-	translateable.__reflowTemplateDictionary = templateDictionary || {};
+const createTranslatableString = (original: string, value: string, templateDictionary?: TranslatableString["__reflowTemplateDictionary"], toJsonHandler?: TranslatableString["toJSON"]) => {
+	const translatable = new String(value) as TranslatableString;
+	translatable.__reflowOriginalString = original;
+	translatable.__reflowTranslatable = true;
+	translatable.__reflowTemplateDictionary = templateDictionary || {};
 	if (toJsonHandler) {
-		translateable.toJSON = toJsonHandler;
-		translateable.toString = toJsonHandler as () => string;
+		translatable.toJSON = toJsonHandler;
+		translatable.toString = toJsonHandler as () => string;
 	} else {
-		translateable.toJSON = () => original;
+		translatable.toJSON = () => original;
 	}
-	return translateable as unknown as string;
+	return translatable as unknown as string;
 };
 
 
@@ -166,7 +166,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			this.update(transport);
 		});
 	}
-	private translateableStringToJsonHandler(strings: Strings, original: string, history: TranslationCompareHistory, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]): string {
+	private translatableStringToJsonHandler(strings: Strings, original: string, history: TranslationCompareHistory, templateDictionary?: TranslatableString["__reflowTemplateDictionary"]): string {
 		const dict = strings[this.currentLanguage];
 		let translated = (dict || {})[original];
 		if (dict && translated === history.lastTranslate) {
@@ -189,12 +189,12 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		history.lastTranslated = translated;
 		return translated;
 	}
-	private createTranslateableString(strings: Strings, original: string, value: string, templateDictionary?: TranslateableString["__reflowTemplateDictionary"]) {
+	private createTranslatableString(strings: Strings, original: string, value: string, templateDictionary?: TranslatableString["__reflowTemplateDictionary"]) {
 		const defaultHistory: TranslationCompareHistory = {
 			lastTranslate: undefined,
 			lastTranslated: original,
 		}
-		return createTranslateableString(original, value, templateDictionary, this.translateableStringToJsonHandler.bind(this, strings, original, defaultHistory, templateDictionary));
+		return createTranslatableString(original, value, templateDictionary, this.translatableStringToJsonHandler.bind(this, strings, original, defaultHistory, templateDictionary));
 	}
 	private getViewUid(viewParent: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>): string {
 		let viewParentUid = null;
@@ -227,7 +227,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			tx: (str: string, templateDictionary?: { [token: string]: any }) => {
 				const workingStack = this.getViewStack(viewParentUid);
 				const flowStack = workingStack[flowViewStackIndex];
-				return this.createTranslateableString(flowStack.strings, str, str, templateDictionary);
+				return this.createTranslatableString(flowStack.strings, str, str, templateDictionary);
 			},
 			language: (language: string, fallbackLanguages?: string[]) => {
 				this.currentLanguage = language;
@@ -315,6 +315,14 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		if (viewParentUid && !this.viewMap[viewParentUid]) {
 			throw new Error(`Provided viewParent is invalid (was it removed?)`);
 		}
+		// Problem
+		// 1. Updating the same view creates an new view and triggers a re-render on the view itself, which is bad when working with animations
+
+		// TODO:
+		// Create new parameter for the function
+		// Find if there is already an view with the same name
+		// if there is a view just continue
+
 		const workingStack = this.getViewStack(viewParentUid);
 		if (!workingStack[flowViewStackIndex]) {
 			workingStack[flowViewStackIndex] = {
