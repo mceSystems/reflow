@@ -315,13 +315,6 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		if (viewParentUid && !this.viewMap[viewParentUid]) {
 			throw new Error(`Provided viewParent is invalid (was it removed?)`);
 		}
-		// Problem
-		// 1. Updating the same view creates an new view and triggers a re-render on the view itself, which is bad when working with animations
-
-		// TODO:
-		// Create new parameter for the function
-		// Find if there is already an view with the same name
-		// if there is a view just continue
 
 		const workingStack = this.getViewStack(viewParentUid);
 		if (!workingStack[flowViewStackIndex]) {
