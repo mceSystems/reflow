@@ -1,7 +1,7 @@
 {
 	"name": "@mcesystems/reflow-example-theming-copy",
 	"private": true,
-	"version": "5.0.5",
+	"version": "5.0.6",
 	"description": "A theme-able application using viewerParameters",
 	"main": "dist/index",
 	"scripts": {
@@ -9,8 +9,8 @@
 	},
 	"author": "mceSystems",
 	"dependencies": {
-		"@mcesystems/reflow": "^5.0.5",
-		"@mcesystems/reflow-react-display-layer": "^5.0.5"
+		"@mcesystems/reflow": "^5.0.6",
+		"@mcesystems/reflow-react-display-layer": "^5.0.6"
 	},
 	"devDependencies": {
 		"@types/react": "^16.14.0",
