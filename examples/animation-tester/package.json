@@ -1,5 +1,5 @@
 {
-	"name": "@mcesystems/reflow-example-theming-copy",
+	"name": "@mcesystems/reflow-example-animation-tester",
 	"private": true,
 	"version": "5.0.6",
 	"description": "A theme-able application using viewerParameters",
