@@ -1,7 +1,7 @@
 {
 	"name": "@mcesystems/reflow-example-simple-to-do",
 	"private": true,
-	"version": "5.0.4",
+	"version": "5.0.5",
 	"description": "A simple to-do implementation with react display layer",
 	"main": "dist/index",
 	"scripts": {
@@ -9,8 +9,8 @@
 	},
 	"author": "mceSystems",
 	"dependencies": {
-		"@mcesystems/reflow": "^5.0.4",
-		"@mcesystems/reflow-react-display-layer": "^5.0.4"
+		"@mcesystems/reflow": "^5.0.5",
+		"@mcesystems/reflow-react-display-layer": "^5.0.5"
 	},
 	"devDependencies": {
 		"react": "^16.8.6",
