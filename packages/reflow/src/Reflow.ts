@@ -1,6 +1,6 @@
 import { FlowProxy, Flow, CancellationError, FlowOptions } from "./Flow";
 import { ViewProxy } from "./ViewProxy";
-import { ViewsMapInterface, ViewInterface } from "./View";
+import { ViewOptions, ViewsMapInterface } from "./View";
 import { v4 } from "uuid";
 import { ReflowTransport } from "./Transports";
 
@@ -35,7 +35,7 @@ export interface FlowToolkit<ViewsMap extends ViewsMapInterface, ViewerParameter
 	/**
 	 * Start new view
 	 */
-	view: <T extends ViewsMap[keyof ViewsMap]>(layer: number, type: T, input?: T["input"], viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>) => ViewProxy<ViewsMap, T>
+	view: <T extends ViewsMap[keyof ViewsMap]>(layer: number, type: T, input?: T["input"], viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>, options?: ViewOptions) => ViewProxy<ViewsMap, T>
 	/**
 	 * Views dictionary to use with the view function
 	 */
@@ -254,7 +254,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 	}
 	private deflateViewTree(viewTree: Array<ViewTree<ViewsMap>>): ReducedViewTree<ViewsMap> {
 		return (
-			(JSON.parse(JSON.stringify(viewTree)) as typeof viewTree) // translate translateable strings
+			(JSON.parse(JSON.stringify(viewTree)) as typeof viewTree) // translate translatable strings
 				.filter(n => n) // remove delete views
 				// filter out items in each ViewTree that are undefined/null
 				.map(n => n.views.filter(j => !!j))
@@ -297,7 +297,7 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		}
 		this.transport.forEach((tp) => tp.sendViewTree(reducedStack));
 	}
-	private view<T extends ViewsMap[keyof ViewsMap]>(flowViewStackIndex: number, viewParentUid: string | null, layer: number, type: T, input?: T["input"], viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>): ViewProxy<ViewsMap, T> {
+	private view<T extends ViewsMap[keyof ViewsMap]>(flowViewStackIndex: number, viewParentUid: string | null, layer: number, type: T, input?: T["input"], viewParent?: ViewProxy<ViewsMap, ViewsMap[keyof ViewsMap]>, options?: ViewOptions): ViewProxy<ViewsMap, T> {
 		if (viewParent) {
 			viewParentUid = this.getViewUid(viewParent);
 		}
@@ -328,6 +328,47 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 			return;
 		}
 		const workingTree: ViewTree<ViewsMap> = workingStack[flowViewStackIndex];
+
+		if(options?.singletonView) {
+			let findSameView = workingTree.views.find((f) => f.name === viewName);
+
+			// the same view is not found in the current stack, start getting up on the stack to find the same view instance if it's running
+			if(!findSameView) {
+				const recurseStackForTheSameView = (index: number) => {
+					if(index < 0) {
+						return null;
+					}
+	
+					const stack = workingStack[index];
+	
+					if(!stack) {
+						return null;
+					}
+	
+					if(stack.done) {
+						return recurseStackForTheSameView(index - 1);
+					}
+	
+					const stackView = stack.views.find((f) => f.name === viewName);
+	
+					if(!stackView) {
+						return recurseStackForTheSameView(index - 1);
+					}
+	
+					return stackView;
+				}
+	
+				findSameView = recurseStackForTheSameView(flowViewStackIndex - 1);
+			}
+	
+			// Will use the same proxy
+			if(findSameView && findSameView.viewProxy) {
+				// input change should update the view
+				const newProxy = findSameView.viewProxy;
+				newProxy.update(input);
+				return newProxy;
+			}
+		}
 
 		const uid = v4();
 		const viewProxy = new ViewProxy<ViewsMap, T>(null, (proxyInput) => {

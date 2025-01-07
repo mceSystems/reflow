@@ -24,7 +24,7 @@ const mainFlow = <Flow<{}>>(async ({ flow }) => {
 		console.log("[mainFlow] selfCancelingFlow has canceled it self");
 	});
 	try {
-		await cf;
+		await scf;
 	} catch (e) {
 		if(e instanceof CancellationError){
 			console.log("[mainFlow] was also rejected with a CancellationError");
@@ -56,9 +56,6 @@ const selfCancelingFlow = <Flow<{}>>(async ({ action, onCanceled, cancel }) => {
 	cancel();
 	console.log("[selfCancelingFlow] out");
 });
-
-
-
 
 
 const reflow = new Reflow<{}>({

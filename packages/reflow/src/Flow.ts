@@ -223,7 +223,7 @@ export class FlowProxy<ViewsMap extends ViewsMapInterface, Input extends any = v
 	}
 	private action<T>(action: Promise<T>): ActionPromise<T> {
 		let cancellationPromiseEmitter;
-		// actions can be either fulfilled with original promise result, canceled becasue:
+		// actions can be either fulfilled with original promise result, canceled because:
 		// 1. flow was cancelled
 		// 2. specifically cancelling this specific action
 		let specificActionCancellationListener: () => void;
