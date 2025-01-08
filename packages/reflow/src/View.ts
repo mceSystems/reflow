@@ -10,7 +10,7 @@ export interface ViewsMapInterface {
 
 export interface ViewOptions {
 	/**
-	 * Reflow will try to find in the stack the same view by name and reuse while only updating the props
+	 * Reflow will try to find in the stack the same view by its "name" (key in viewsMap)  and reuse while only updating the props
 	 * ex: Preloader with animation - Will only re-render the component instead of removing the instance and creating a new one every time
 	 */
 	singletonView?: true;
