@@ -330,42 +330,45 @@ export class Reflow<ViewsMap extends ViewsMapInterface, ViewerParameters = {}> {
 		}
 		const workingTree: ViewTree<ViewsMap> = workingStack[flowViewStackIndex];
 
-		if(options?.singletonView) {
+		if (options?.singletonView) {
 			let findSameView = workingTree.views.find((f) => f.name === viewName);
 
 			// the same view is not found in the current stack, start getting up on the stack to find the same view instance if it's running
-			if(!findSameView) {
+			if (!findSameView) {
 				const recurseStackForTheSameView = (index: number) => {
-					if(index < 0) {
+					if (index < 0) {
 						return null;
 					}
-	
+
 					const stack = workingStack[index];
-	
-					if(!stack) {
+
+					if (!stack) {
 						return null;
 					}
-	
-					if(stack.done) {
+
+					if (stack.done) {
 						return recurseStackForTheSameView(index - 1);
 					}
-	
+
 					const stackView = stack.views.find((f) => f.name === viewName);
-	
-					if(!stackView) {
+
+					if (!stackView) {
 						return recurseStackForTheSameView(index - 1);
 					}
-	
+
 					return stackView;
 				}
-	
+
 				findSameView = recurseStackForTheSameView(flowViewStackIndex - 1);
 			}
-	
+
 			// Will use the same proxy
-			if(findSameView && findSameView.viewProxy) {
+			if (findSameView && findSameView.viewProxy) {
 				// input change should update the view
 				const newProxy = findSameView.viewProxy;
+				if(options?.resetInput) {
+					findSameView.input = {};
+				}
 				newProxy.update(input);
 				return newProxy;
 			}

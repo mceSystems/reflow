@@ -14,4 +14,11 @@ export interface ViewOptions {
 	 * ex: Preloader with animation - Will only re-render the component instead of removing the instance and creating a new one every time
 	 */
 	singletonView?: true;
+
+	/**
+	 * if true, the singleton view input will be reset with the new input the user provided
+	 * If false, the singleton view input will be merged with the last input
+	 * @default false
+	 */
+	resetInput?: boolean;
 };
