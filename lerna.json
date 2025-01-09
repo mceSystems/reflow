@@ -1,14 +1,14 @@
 {
-	"command": {
-		"bootstrap": {
-			"rejectCycles": true,
-			"forceLocal": true,
-			"strict": true
-		}
-	},
-	"packages": [
-		"examples/*",
-		"packages/*"
-	],
-	"version": "5.0.5"
+  "command": {
+    "bootstrap": {
+      "rejectCycles": true,
+      "forceLocal": true,
+      "strict": true
+    }
+  },
+  "packages": [
+    "examples/*",
+    "packages/*"
+  ],
+  "version": "5.0.6"
 }

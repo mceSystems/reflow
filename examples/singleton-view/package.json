@@ -1,8 +1,8 @@
 {
-	"name": "@mcesystems/reflow-example-flow-host",
+	"name": "@mcesystems/reflow-example-singleton-view",
 	"private": true,
 	"version": "5.0.6",
-	"description": "A flow container hab to show how to display views from a flow in a different reflow instance",
+	"description": "An application that demonstrates the singleton view functionality",
 	"main": "dist/index",
 	"scripts": {
 		"start": "webpack serve --mode production"
@@ -13,7 +13,9 @@
 		"@mcesystems/reflow-react-display-layer": "^5.0.6"
 	},
 	"devDependencies": {
-		"react": "^16.8.6",
+		"@types/react": "^16.14.0",
+		"react": "^16.14.0",
+		"react-dom": "^16.14.0",
 		"ts-loader": "^9.4.2",
 		"typescript": "^4.9.3",
 		"webpack": "^5.75.0",
