@@ -18,6 +18,8 @@ const childFlow = <Flow<ViewInterfacesType, { themes: object }>>(async ({ view, 
 		console.log(`Another Simple flow`);
 		view(0, views.AnimationTester, {
 			theme: currentTheme,
+			prop1: 'childFlow',
+			prop2: 'childFlow2',
 		}, undefined, {
 			singletonView: true,
 		});
@@ -33,8 +35,10 @@ const simpleFlow = <Flow<ViewInterfacesType, { themes: object }>>(async ({ view,
 	const createView = () => {
 		return view(0, views.AnimationTester, {
 			theme: currentTheme,
+			prop1: 'parentFlow',
 		}, undefined, {
 			singletonView: true,
+			resetInput: true,
 		});
 	}
 

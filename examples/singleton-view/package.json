@@ -1,8 +1,8 @@
 {
-	"name": "@mcesystems/reflow-example-animation-tester",
+	"name": "@mcesystems/reflow-example-singleton-view",
 	"private": true,
 	"version": "5.0.6",
-	"description": "A theme-able application using viewerParameters",
+	"description": "An application that demonstrates the singleton view functionality",
 	"main": "dist/index",
 	"scripts": {
 		"start": "webpack serve --mode production"

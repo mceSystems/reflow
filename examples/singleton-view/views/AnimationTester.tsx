@@ -2,9 +2,9 @@ import { ReflowReactComponentProps } from "@mcesystems/reflow-react-display-laye
 import ThemeTesterInterface from "../viewInterfaces/AnimationTester";
 import React from "react";
 
-function AnimationTester({ theme: color }: ReflowReactComponentProps<ThemeTesterInterface>) {
+function AnimationTester({ theme: color, prop1, prop2 }: ReflowReactComponentProps<ThemeTesterInterface>) {
 
-  console.log(`Re-render`);
+  console.log(`Re-render`, { color, prop1, prop2 });
   return (
     <div>
       <div style={{ color }}>
