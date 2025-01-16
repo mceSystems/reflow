@@ -1,6 +1,6 @@
 {
 	"name": "@mcesystems/reflow",
-	"version": "5.0.5",
+	"version": "6.0.0",
 	"description": "Reflow's core library",
 	"main": "dist/index",
 	"typings": "dist/index",
