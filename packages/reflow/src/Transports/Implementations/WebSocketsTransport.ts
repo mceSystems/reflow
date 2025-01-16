@@ -1,9 +1,9 @@
 import { ReflowTransport } from "../ReflowTransport";
 import { ReducedViewTree } from "../../Reflow";
 import { ViewInterface, ViewsMapInterface } from "../../View";
-
+import type { Server } from "http";
 import { Server as ServerSocket } from "socket.io";
-import { Socket as ClientSocket } from "socket.io-client";
+import { Socket as ClientSocket} from "socket.io-client";
 import { CorsOptions } from "cors";
 
 export { CorsOptions } from "cors";
@@ -11,7 +11,9 @@ export { CorsOptions } from "cors";
 interface WebSocketConnectionOptions {
 	host?: string;
 	port?: number;
+	path?: string;
 	cors?: CorsOptions;
+	server?: Server;
 }
 
 export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTransport<ViewerParameters> {
@@ -24,17 +26,28 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 		this.__socket = null;
 	}
 	internalInitializeAsEngine() {
-		const { port = 3000, host = "127.0.0.1", cors } = this.__connectionOptions || {};
+		const { port = 3000, host = "127.0.0.1", path = "", cors, server = null } = this.__connectionOptions || {};
 
-		const httpServer = require("http").createServer();
+		let httpServer = server;
+		let shouldListen = false;
+		if (!server) {
+			httpServer = require("http").createServer();
+			shouldListen = true;
+		}
+
 		const { Server } = require("socket.io") as { Server: typeof ServerSocket };
 		const io = new Server(httpServer, {
 			cors,
+			path,
 		});
-		httpServer.listen({
-			port,
-			host,
-		});
+
+		if (shouldListen) {
+			httpServer.listen({
+				port,
+				host,
+			});
+		}
+
 		this.__socket = io;
 		this.__socket.on("connection", (socket) => {
 			socket
@@ -59,9 +72,9 @@ export default class WebSocketsTransport<ViewerParameters = {}> extends ReflowTr
 	}
 	internalInitializeAsDisplay() {
 		const { io } = require("socket.io-client");
-		const { host = "127.0.0.1", port = 3000 } = this.__connectionOptions || {};
+		const { host = "127.0.0.1", port = 3000, path = "" } = this.__connectionOptions || {};
 
-		const socket = io(`http://${host}:${port}`);
+		const socket = io(`http://${host}:${port}`, { path });
 
 		this.__socket = socket;
 		socket
