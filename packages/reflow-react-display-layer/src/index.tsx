@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import * as React from "react";
 import { useState, useEffect } from "react";
 import ReflowDisplayLayer, { ViewsComponents } from "./ReflowDisplayLayer";
-import { render } from "react-dom";
 
 export * from "./ReflowReactComponent";
 
