@@ -1,6 +1,5 @@
 import { ViewInterface } from "@mcesystems/reflow";
 
-
 export interface Input {
 	content: string;
 }
