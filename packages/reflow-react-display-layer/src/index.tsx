@@ -1,5 +1,5 @@
 import { ReflowTransport, ViewsMapInterface } from "@mcesystems/reflow";
-import { render } from "react-dom";
+import { createRoot } from "react-dom/client";
 import * as React from "react";
 import { useState, useEffect } from "react";
 import ReflowDisplayLayer, { ViewsComponents } from "./ReflowDisplayLayer";
@@ -43,5 +43,6 @@ export const ReflowDisplayLayerElement = <ViewMap extends ViewsMapInterface, Vie
 }
 
 export function renderDisplayLayer<ViewMap extends ViewsMapInterface, ViewerParameters = {}>({ transport, element, views, wrapper }: ReactReflowOptions<ViewMap, ViewerParameters>) {
-	render(<ReflowDisplayLayerElement views={views} transport={transport} wrapper={wrapper} />, element);
+	const root = createRoot(element);
+	root.render(<ReflowDisplayLayerElement transport={transport} views={views} wrapper={wrapper} />);
 }

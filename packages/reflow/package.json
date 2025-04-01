@@ -1,6 +1,6 @@
 {
 	"name": "@mcesystems/reflow",
-	"version": "6.0.0",
+	"version": "7.0.0",
 	"description": "Reflow's core library",
 	"main": "dist/index",
 	"typings": "dist/index",
@@ -21,9 +21,9 @@
 	},
 	"devDependencies": {
 		"@types/cors": "^2.8.13",
-		"@types/node": "^16.18.6",
+		"@types/node": "^18.13.0",
 		"@types/uuid": "^9.0.0",
-		"typescript": "^4.9.3"
+		"typescript": "^5.7.3"
 	},
 	"publishConfig": {
 		"access": "public"
