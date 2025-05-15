@@ -1,25 +1,25 @@
 {
-  "name": "@mcesystems/reflow-example-presentation",
-  "private": true,
-  "version": "7.0.0",
-  "description": "A slideshow app that shows view parent capabilities and how to control the view tree",
-  "main": "dist/index",
-  "scripts": {
-    "start": "webpack serve --mode production"
-  },
-  "author": "mceSystems",
-  "dependencies": {
-    "@mcesystems/reflow": "^7.0.0",
-    "@mcesystems/reflow-react-display-layer": "^7.0.0"
-  },
-  "devDependencies": {
-	"@types/react": "^18.3.12",
-	"@types/node": "^18.13.0",
-    "react": "^18.3.1",
-    "ts-loader": "^9.4.2",
-    "typescript": "^5.7.3",
-    "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.1.1"
-  }
+	"name": "@mcesystems/reflow-example-presentation",
+	"private": true,
+	"version": "7.0.1",
+	"description": "A slideshow app that shows view parent capabilities and how to control the view tree",
+	"main": "dist/index",
+	"scripts": {
+		"start": "webpack serve --mode production"
+	},
+	"author": "mceSystems",
+	"dependencies": {
+		"@mcesystems/reflow": "^7.0.1",
+		"@mcesystems/reflow-react-display-layer": "^7.0.1"
+	},
+	"devDependencies": {
+		"@types/react": "^18.3.12",
+		"@types/node": "^18.13.0",
+		"react": "^18.3.1",
+		"ts-loader": "^9.4.2",
+		"typescript": "^5.7.3",
+		"webpack": "^5.75.0",
+		"webpack-cli": "^5.0.1",
+		"webpack-dev-server": "^4.1.1"
+	}
 }

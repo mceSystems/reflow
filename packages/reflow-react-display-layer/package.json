@@ -1,6 +1,6 @@
 {
 	"name": "@mcesystems/reflow-react-display-layer",
-	"version": "7.0.0",
+	"version": "7.0.1",
 	"description": "React display layer for @mcesystems/reflow",
 	"main": "dist/index",
 	"typings": "dist/index",
@@ -16,7 +16,7 @@
 	"license": "MIT",
 	"dependencies": {},
 	"peerDependencies": {
-		"@mcesystems/reflow": "^7.0.0",
+		"@mcesystems/reflow": "^7.0.1",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
 	},
